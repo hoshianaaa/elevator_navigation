@@ -108,6 +108,8 @@ class EleMapServer
 		void floorNumberCallback(const std_msgs::Int8::ConstPtr& msg)
 		{
 			ROS_INFO("change floor_number to [%d]", msg->data);
+			publishMapFromFloorNumber(msg->data,false);
+			publishMapFromFloorNumber(msg->data,true);
 		}
 
 		bool AddMapData(const std::string &filename, const int map_number, bool costmap=false)
@@ -245,6 +247,10 @@ class EleMapServer
 int main(int argc, char** argv){
 	ros::init(argc, argv, "ele_map_server");
 	EleMapServer es("/home/icart/catkin_ws/src/elevator_navigation/ele_map_server/elevator_map/", 3);
-	ros::spin();
+	ros::Rate r(10);
+	while(ros::ok()){
+		ros::spinOnce();
+		r.sleep();
+	}
 	return 0;
 }
