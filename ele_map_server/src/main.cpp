@@ -1,9 +1,8 @@
 /* Author: Hoshianaaa */
 
 #include <ros/ros.h>
-
-#include <nav_msgs/MapMetaData.h>
-#include <nav_msgs/OccupancyGrid.h>
+#include <nav_msgs/MapMetaData.h> 
+#include <nav_msgs/OccupancyGrid.h> 
 #include <std_msgs/Int8.h>
 
 #include <fstream>
@@ -26,6 +25,8 @@ void operator >> (const YAML::Node& node, T& i)
 class MapYamlData
 {
 	public:
+		bool costmap;
+		int number;
 		std::string image;
 		double resolution;
 		double origin[3];
@@ -39,6 +40,7 @@ class EleMapServer
 	public:
 		EleMapServer(const std::string& dirname, int start_number)
 		{
+			dirname_ = dirname;
 			floor_number_sub = n.subscribe<std_msgs::Int8>("floor_number", 1, &EleMapServer::floorNumberCallback,this);
 			map_pub = n.advertise<nav_msgs::OccupancyGrid>("map", 1, true);
 			map_metadata_pub = n.advertise<nav_msgs::MapMetaData>("map_metadata", 1, true);
@@ -82,11 +84,26 @@ class EleMapServer
 				std::cout << floor_number_vector_[i] << std::endl;
 				std::stringstream ss;
 				ss << floor_number_vector_[i];
-				AddMapData(dirname + ss.str() + ".yaml");
-				AddMapData(dirname + ss.str() + "_for_costmap.yaml");
+				AddMapData(dirname + ss.str() + ".yaml", int(floor_number_vector_[i]));
+				AddMapData(dirname + ss.str() + "_for_costmap.yaml", int(floor_number_vector_[i]),true);
 			}
 			std::cout << std::endl;
 			
+			int index;
+			getIndex(start_number, index);
+
+			MapYamlData md;
+			getMapDataFromIndex(index, md.image, md.resolution, md.origin, md.negate, md.occupied_thresh, md.free_thresh);
+			ROS_INFO("Loading map from image \"%s\"", md.image.c_str());
+			map_server::loadMapFromFile(&map_resp_,md.image.c_str(), md.resolution, md.negate,md.free_thresh, md.occupied_thresh, md.origin);
+			map_resp_.map.info.map_load_time = ros::Time::now();
+			map_resp_.map.header.frame_id = "map";
+			map_resp_.map.header.stamp = ros::Time::now();
+			meta_data_message_ = map_resp_.map.info;
+			map_metadata_pub.publish(meta_data_message_);
+			map_pub.publish(map_resp_.map);
+
+
 		}
 
 	private:
@@ -96,14 +113,17 @@ class EleMapServer
 		ros::Publisher map_metadata_for_costmap_pub;
 		ros::Publisher map_for_costmap_pub;
 		ros::Subscriber floor_number_sub;						
+		std::string dirname_;
 		std::vector<int> floor_number_vector_;
 		std::vector<MapYamlData> map_yaml_data_vector_;
+		nav_msgs::MapMetaData meta_data_message_;
+		nav_msgs::GetMap::Response map_resp_;
 		void floorNumberCallback(const std_msgs::Int8::ConstPtr& msg)
 		{
 			ROS_INFO("change floor_number to [%d]", msg->data);
 		}
 
-		bool AddMapData(const std::string &filename)
+		bool AddMapData(const std::string &filename, const int map_number, bool costmap=false)
 		{
 			ROS_INFO("read file:[%s]\n",filename.c_str());
 			try{
@@ -113,6 +133,8 @@ class EleMapServer
 					return false;
 				}
 				MapYamlData map_data;
+				map_data.number = map_number;
+				map_data.costmap = costmap;
 
 				YAML::Node doc;
 
@@ -124,6 +146,7 @@ class EleMapServer
 				#endif
 				try{
 					doc["image"] >> map_data.image;
+					map_data.image = dirname_ + map_data.image;
 				} catch (YAML::InvalidScalar) {
 					ROS_ERROR("The map does not contain an image tag or it is invalid.");
 				}
@@ -169,11 +192,41 @@ class EleMapServer
 			ROS_INFO("add map data");
 			return true;
 		}
-};
+
+		bool getIndex(const int number, int& index, bool costmap=false){
+			for (int i=0;i<map_yaml_data_vector_.size();i++){
+				if (map_yaml_data_vector_[i].number == number){
+					if (costmap == map_yaml_data_vector_[i].costmap)
+					{
+						index = i;
+						return true;
+					}
+				}
+				if (i == map_yaml_data_vector_.size() - 1){
+					ROS_ERROR("Nothin number %d in elevator map\n", number);
+					return false;
+				}
+			}
+		}
+
+		void getMapDataFromIndex(const int index, std::string& image, double& resolution, double* origin, int& negate, double& occupied_thresh, double& free_thresh)
+		{
+			ROS_INFO("get map data from %d\n", index);
+			image = map_yaml_data_vector_[index].image;
+			resolution = map_yaml_data_vector_[index].resolution;
+			origin[0] = map_yaml_data_vector_[index].origin[0];
+			origin[1] = map_yaml_data_vector_[index].origin[1];
+			origin[2] = map_yaml_data_vector_[index].origin[2];
+			negate = map_yaml_data_vector_[index].negate;
+			occupied_thresh = map_yaml_data_vector_[index].occupied_thresh;
+			free_thresh = map_yaml_data_vector_[index].free_thresh;
+		}
+	};
 	
 
 int main(int argc, char** argv){
 	ros::init(argc, argv, "ele_map_server");
-	EleMapServer es("/home/icart/catkin_ws/src/elevator_navigation/ele_map_server/elevator_map/", 1);
+	EleMapServer es("/home/icart/catkin_ws/src/elevator_navigation/ele_map_server/elevator_map/", 3);
+	ros::spin();
 	return 0;
 }
