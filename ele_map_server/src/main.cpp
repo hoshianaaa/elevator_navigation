@@ -44,8 +44,8 @@ class EleMapServer
 			floor_number_sub = n.subscribe<std_msgs::Int8>("floor_number", 1, &EleMapServer::floorNumberCallback,this);
 			map_pub = n.advertise<nav_msgs::OccupancyGrid>("map", 1, true);
 			map_metadata_pub = n.advertise<nav_msgs::MapMetaData>("map_metadata", 1, true);
-			map_for_costmap_pub = n.advertise<nav_msgs::OccupancyGrid>("map", 1, true);
-			map_metadata_for_costmap_pub = n.advertise<nav_msgs::OccupancyGrid>("map", 1, true);
+			map_for_costmap_pub = n.advertise<nav_msgs::OccupancyGrid>("map_for_costmap", 1, true);
+			map_metadata_for_costmap_pub = n.advertise<nav_msgs::OccupancyGrid>("map_meta_data_for_costmap", 1, true);
 			
 			ros::NodeHandle private_nh("~");
 
@@ -88,36 +88,23 @@ class EleMapServer
 				AddMapData(dirname + ss.str() + "_for_costmap.yaml", int(floor_number_vector_[i]),true);
 			}
 			std::cout << std::endl;
-			
-			int index;
-			getIndex(start_number, index);
-
-			MapYamlData md;
-			getMapDataFromIndex(index, md.image, md.resolution, md.origin, md.negate, md.occupied_thresh, md.free_thresh);
-			ROS_INFO("Loading map from image \"%s\"", md.image.c_str());
-			map_server::loadMapFromFile(&map_resp_,md.image.c_str(), md.resolution, md.negate,md.free_thresh, md.occupied_thresh, md.origin);
-			map_resp_.map.info.map_load_time = ros::Time::now();
-			map_resp_.map.header.frame_id = "map";
-			map_resp_.map.header.stamp = ros::Time::now();
-			meta_data_message_ = map_resp_.map.info;
-			map_metadata_pub.publish(meta_data_message_);
-			map_pub.publish(map_resp_.map);
-
-
+			publishMapFromFloorNumber(start_number,false);
+			publishMapFromFloorNumber(start_number,true);
 		}
 
 	private:
 		ros::NodeHandle n;
 		ros::Publisher map_pub;
 		ros::Publisher map_metadata_pub;
-		ros::Publisher map_metadata_for_costmap_pub;
 		ros::Publisher map_for_costmap_pub;
+		ros::Publisher map_metadata_for_costmap_pub;
 		ros::Subscriber floor_number_sub;						
 		std::string dirname_;
 		std::vector<int> floor_number_vector_;
 		std::vector<MapYamlData> map_yaml_data_vector_;
 		nav_msgs::MapMetaData meta_data_message_;
 		nav_msgs::GetMap::Response map_resp_;
+		nav_msgs::GetMap::Response map_resp_for_costmap_;
 		void floorNumberCallback(const std_msgs::Int8::ConstPtr& msg)
 		{
 			ROS_INFO("change floor_number to [%d]", msg->data);
@@ -220,6 +207,37 @@ class EleMapServer
 			negate = map_yaml_data_vector_[index].negate;
 			occupied_thresh = map_yaml_data_vector_[index].occupied_thresh;
 			free_thresh = map_yaml_data_vector_[index].free_thresh;
+		}
+
+		bool publishMapFromFloorNumber(const int floor_number, const int costmap=false){
+
+			int index;
+			getIndex(floor_number, index, costmap);
+			MapYamlData md;
+			getMapDataFromIndex(index, md.image, md.resolution, md.origin, md.negate, md.occupied_thresh, md.free_thresh);
+
+			if(costmap){
+				map_server::loadMapFromFile(&map_resp_for_costmap_,md.image.c_str(), md.resolution, md.negate,md.free_thresh, md.occupied_thresh, md.origin);
+				ROS_INFO("Loading map from image \"%s\"", md.image.c_str());
+				map_resp_for_costmap_.map.info.map_load_time = ros::Time::now();
+				map_resp_for_costmap_.map.header.frame_id = "map_for_costmap";
+				map_resp_for_costmap_.map.header.stamp = ros::Time::now();
+				meta_data_message_ = map_resp_for_costmap_.map.info;
+				//map_metadata_for_costmap_pub.publish(meta_data_message_);
+				map_for_costmap_pub.publish(map_resp_for_costmap_.map);
+
+				return true;
+			}
+
+			map_server::loadMapFromFile(&map_resp_,md.image.c_str(), md.resolution, md.negate,md.free_thresh, md.occupied_thresh, md.origin);
+			ROS_INFO("Loading map from image \"%s\"", md.image.c_str());
+			map_resp_.map.info.map_load_time = ros::Time::now();
+			map_resp_.map.header.frame_id = "map";
+			map_resp_.map.header.stamp = ros::Time::now();
+			meta_data_message_ = map_resp_.map.info;
+			map_metadata_pub.publish(meta_data_message_);
+			map_pub.publish(map_resp_.map);
+			return true;
 		}
 	};
 	

@@ -8,14 +8,21 @@ project(ele_map_server)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  map_server
+	map_server
   nav_msgs
   roscpp
   std_msgs
 )
 
+
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
+find_package(PkgConfig)
+pkg_search_module(yaml-cpp REQUIRED yaml-cpp)
+
+if(NOT ${yaml-cpp_VERSION} VERSION_LESS "0.5")
+add_definitions(-DNEW_YAMLCPP)
+endif()
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -105,7 +112,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES ele_map_server
+  LIBRARIES ele_map_server
 #  CATKIN_DEPENDS map_server nav_msgs roscpp std_msgs
 #  DEPENDS system_lib
 )
@@ -117,8 +124,8 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-# include
   ${catkin_INCLUDE_DIRS}
+	${yaml-cpp_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -198,3 +205,9 @@ include_directories(
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+add_executable(ele_map_server src/main.cpp)
+target_link_libraries(ele_map_server 
+	${catkin_LIBRARIES}
+	${yaml-cpp_LIBRARIES}
+)
+
