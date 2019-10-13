@@ -230,7 +230,7 @@ class EleMapServer
 			getMapDataFromIndex(index, md.image, md.resolution, md.origin, md.negate, md.occupied_thresh, md.free_thresh);
 
 			if(costmap){
-				map_server::loadMapFromFile(&map_resp_for_costmap_,md.image.c_str(), md.resolution, md.negate,md.free_thresh, md.occupied_thresh, md.origin);
+				map_server::loadMapFromFile(&map_resp_for_costmap_,md.image.c_str(), md.resolution, md.negate,md.occupied_thresh, md.free_thresh, md.origin);
 				ROS_INFO("Loading map from image \"%s\"", md.image.c_str());
 				map_resp_for_costmap_.map.info.map_load_time = ros::Time::now();
 				map_resp_for_costmap_.map.header.frame_id = "map_for_costmap";
@@ -242,7 +242,7 @@ class EleMapServer
 				return true;
 			}
 
-			map_server::loadMapFromFile(&map_resp_,md.image.c_str(), md.resolution, md.negate,md.free_thresh, md.occupied_thresh, md.origin);
+			map_server::loadMapFromFile(&map_resp_,md.image.c_str(), md.resolution, md.negate,md.occupied_thresh, md.free_thresh, md.origin);
 			ROS_INFO("Loading map from image \"%s\"", md.image.c_str());
 			map_resp_.map.info.map_load_time = ros::Time::now();
 			map_resp_.map.header.frame_id = "map";
