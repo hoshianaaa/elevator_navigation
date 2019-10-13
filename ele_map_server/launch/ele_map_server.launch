@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+
+<launch>
+  <arg name="start_floor" default="3"/>
+  <node name="ele_map_server" pkg="ele_map_server" type="ele_map_server" output="screen">
+    <param name="start_number" value="$(arg start_floor)"/>
+  </node>
+</launch>
