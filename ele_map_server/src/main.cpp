@@ -40,8 +40,9 @@ class EleMapServer
 	public:
 		EleMapServer(const std::string& dirname, int start_number)
 		{
+			floor_number_ = start_number;
 			dirname_ = dirname;
-			floor_number_sub = n.subscribe<std_msgs::Int8>("floor_number", 1, &EleMapServer::floorNumberCallback,this);
+			floor_number_sub = n.subscribe<std_msgs::Int8>("change_floor/floor_number", 1, &EleMapServer::floorNumberCallback,this);
 			map_pub = n.advertise<nav_msgs::OccupancyGrid>("map", 1, true);
 			map_metadata_pub = n.advertise<nav_msgs::MapMetaData>("map_metadata", 1, true);
 			map_for_costmap_pub = n.advertise<nav_msgs::OccupancyGrid>("map_for_costmap", 1, true);
@@ -90,6 +91,7 @@ class EleMapServer
 			std::cout << std::endl;
 			publishMapFromFloorNumber(start_number,false);
 			publishMapFromFloorNumber(start_number,true);
+			service = n.advertiseService("static_map", &EleMapServer::mapCallback, this);
 		}
 
 	private:
@@ -99,8 +101,10 @@ class EleMapServer
 		ros::Publisher map_for_costmap_pub;
 		ros::Publisher map_metadata_for_costmap_pub;
 		ros::Subscriber floor_number_sub;						
+		ros::ServiceServer service;
 		std::string dirname_;
 		std::vector<int> floor_number_vector_;
+		int floor_number_;
 		std::vector<MapYamlData> map_yaml_data_vector_;
 		nav_msgs::MapMetaData meta_data_message_;
 		nav_msgs::GetMap::Response map_resp_;
@@ -110,6 +114,14 @@ class EleMapServer
 			ROS_INFO("change floor_number to [%d]", msg->data);
 			publishMapFromFloorNumber(msg->data,false);
 			publishMapFromFloorNumber(msg->data,true);
+			floor_number_ = msg->data;
+		}
+
+		bool mapCallback(nav_msgs::GetMap::Request &req, nav_msgs::GetMap::Response &res )
+		{
+			res = map_resp_;
+			ROS_INFO("Sending map");
+			return true;
 		}
 
 		bool AddMapData(const std::string &filename, const int map_number, bool costmap=false)
@@ -246,7 +258,7 @@ class EleMapServer
 
 int main(int argc, char** argv){
 	ros::init(argc, argv, "ele_map_server");
-	EleMapServer es("/home/icart/catkin_ws/src/elevator_navigation/ele_map_server/elevator_map/", 3);
+	EleMapServer es("/home/icart/catkin_ws/src/elevator_navigation/ele_map_server/elevator_map/", 1);
 	ros::Rate r(10);
 	while(ros::ok()){
 		ros::spinOnce();
