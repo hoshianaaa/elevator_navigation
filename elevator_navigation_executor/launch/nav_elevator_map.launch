@@ -14,7 +14,7 @@
     <arg name="cmd_vel" value="icart_mini/cmd_vel"/>
   </include>
 
-  <include file="$(find elevator_navigation_executor)/launch/localization.launch">
+  <include file="$(find elevator_navigation_executor)/launch/amcl.launch">
     <arg name="robot_name" value="$(arg robot_name)"/>
   </include>
 
