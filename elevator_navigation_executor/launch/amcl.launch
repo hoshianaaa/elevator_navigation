@@ -6,6 +6,5 @@
   <node pkg="amcl" type="amcl" name="amcl" output="screen">
     <rosparam file="$(find elevator_navigation_executor)/param/localization_params.yaml" command="load"/>
     <rosparam file="$(find elevator_navigation_executor)/param/localization_params_$(arg robot_name).yaml" command="load"/>
-    <remap from="/scan" to="/vel_scan" />
   </node>
 </launch>
