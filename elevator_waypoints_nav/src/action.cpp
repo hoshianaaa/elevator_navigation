@@ -8,10 +8,7 @@ Action::Action(geometry_msgs::Point sp, geometry_msgs::Point fp, bool rotate)
 	start_point_ = sp;
 	goal_point_ = fp;
 
-	if (!calc_goal_angle(sp,fp,rotate))
-	{
-		ROS_ERROR("action:error calc goal angle");
-	}
+	goal_angle_ = calc_goal_angle(sp,fp,rotate);
 
 	robot_frame_ = "base_link";
 	global_frame_ = "map";
@@ -23,7 +20,7 @@ bool Action::get_robot_pose(){
 	try
 	{
 		tf::StampedTransform trans;
-		tf_listener_.waitForTransform(global_frame_, robot_frame_, ros::Time(0), ros::Duration(0.5));
+		tf_listener_.waitForTransform(global_frame_, robot_frame_, ros::Time(0), ros::Duration(3.0));
 		tf_listener_.lookupTransform(global_frame_, robot_frame_, ros::Time(0), trans);
 		robot_x_ = trans.getOrigin().x();
 		robot_y_ = trans.getOrigin().y();
@@ -84,4 +81,16 @@ double Action::calc_angToline(geometry_msgs::Point start_point, geometry_msgs::P
 }
 
 void Action::scanCallback(const sensor_msgs::LaserScanPtr& msg){
+}
+
+void Action::print_env_data(){
+	std::cout << "start_point = " << "(" << start_point_.x << ", " << start_point_.y << ", " << start_point_.z << ")" <<  std::endl;
+	std::cout << "goal_point = " << "(" << goal_point_.x << ", " << goal_point_.y << ", " << goal_point_.z << ")" <<  std::endl;
+	std::cout << "goal_angle:" << goal_angle_ << std::endl;
+}
+
+void Action::print_robot_data(){
+	std::cout << "  x:" << robot_x_ << std::endl;
+	std::cout << "  y:" << robot_y_ << std::endl;
+	std::cout << "yaw:" << robot_yaw_ << std::endl;
 }
