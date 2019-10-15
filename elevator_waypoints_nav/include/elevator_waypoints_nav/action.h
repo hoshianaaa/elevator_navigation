@@ -13,14 +13,19 @@ public:
 
 	bool get_robot_pose();
 	void move();
-	void rotate();
+	bool rotate(double speed, double goal_angel_th);
 	bool object();
-	bool on_goal();
-	void publish_vel(double speed, double ang_speed);
 
-	double calc_goal_angle(geometry_msgs::Point start_point, geometry_msgs::Point finish_point, bool rotate = false);
-	double calc_distance_line(geometry_msgs::Point start_point, geometry_msgs::Point finish_point, geometry_msgs::Point robot_point);
-	double calc_angToline(geometry_msgs::Point start_point, geometry_msgs::Point finish_point, geometry_msgs::Point robot_point);
+	bool on_goal();
+
+	void publish_vel(double speed, double ang_speed); bool calc_dis_diff(const geometry_msgs::Point start_point, const geometry_msgs::Point finish_point, const geometry_msgs::Point robot_point, double& distance); bool calc_ang_diff(const geometry_msgs::Point start_point, const geometry_msgs::Point finish_point, const geometry_msgs::Point robot_point, double& in_ang);
+	bool calc_pose_diff(const double robot_yaw, double& ang);
+
+	bool calc_vectors_interior_angle(const double a1, const double a2, const double b1, const double b2, double& ang);
+	bool calc_goal_angle(const geometry_msgs::Point start_point, const geometry_msgs::Point finish_point, const bool rotate, double& ang);
+
+	void print_env_data();
+	void print_robot_data();
 
 	
 private:
@@ -32,17 +37,18 @@ private:
 	tf::TransformListener tf_listener_;
 	tf::StampedTransform trans_;
 
-	double robot_x_;
-	double robot_y_;
-	double robot_yaw_;
 	geometry_msgs::Point goal_point_;
 	geometry_msgs::Point start_point_;
+	geometry_msgs::Point robot_point_;
+	double goal_angle_;
 
 	std::string robot_frame_, global_frame_;
 
 	bool rotate_on_goal_;
 	
 	double speed_;
+	double ang_speed_max_;
+	double freq_;
 
 };
 

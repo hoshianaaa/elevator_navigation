@@ -8,13 +8,17 @@ Action::Action(geometry_msgs::Point sp, geometry_msgs::Point fp, bool rotate)
 	start_point_ = sp;
 	goal_point_ = fp;
 
-	goal_angle_ = calc_goal_angle(sp,fp,rotate);
+	if(!calc_goal_angle(sp,fp,rotate,goal_angle_)){
+		ROS_ERROR("cannot calc goal_angle");
+	}
 
 	robot_frame_ = "base_link";
 	global_frame_ = "map";
 
-	speed_ = 0.5;
+	speed_ = 0.3;
 	ang_speed_max_ = 0.5;
+
+	freq_ = 10;
 }
 
 bool Action::get_robot_pose(){
@@ -36,26 +40,69 @@ bool Action::get_robot_pose(){
 }
 
 void Action::move(){
-	double ang_speed=0;
-	double line_distance_gain = 10;
-	double angToline_gain = 10;
+	double ang_speed =0.0;
+
+	double gain_to_dis_diff = -2.0;
+	double gain_to_ang_diff = 2.0;
+	double gain_to_pose_diff = -2.0;
+
+	ros::Rate loop_rate(freq_);
 	get_robot_pose();
 	while(!on_goal()){
 		get_robot_pose();
 		while(object()){
 			publish_vel(0,0);
+			loop_rate.sleep();
 		}
 		geometry_msgs::Point sp,fp,rp;
 		sp = start_point_;
 		fp = goal_point_;
-		ang_speed = line_distance_gain * calc_distance_line(sp, fp, rp) + calc_angToline(sp, fp, rp);
-		publish_vel(speed_, ang_speed);
+
+		get_robot_pose();
+		rp = robot_point_;
+		double dis_diff, ang_diff, pose_diff;
+		if (calc_dis_diff(sp, fp, rp, dis_diff)){
+			if (calc_ang_diff(sp, fp, rp, ang_diff)){
+				if (calc_pose_diff(rp.z, pose_diff)){
+					std::cout << "dis:" << dis_diff << " ang:" << ang_diff << " pose:" << pose_diff <<  std::endl;
+					print_env_data();
+					ang_speed = gain_to_dis_diff * dis_diff + gain_to_ang_diff * ang_diff + gain_to_pose_diff * pose_diff;
+					publish_vel(speed_, ang_speed);
+					loop_rate.sleep();
+				}
+			}
+		}
+		loop_rate.sleep();
 	}
-	if (rotate_on_goal_)rotate();
+	if(rotate(0.5, 0.2))std::cout << "finish rotate 1" << std::endl;
+	if(rotate(0.2, 0.05))std::cout << "finish rotate 2" << std::endl;
 }
 
-void Action::rotate(){
+bool Action::rotate(double speed, double goal_angle_th){
+	ros::Rate loop_rate(freq_);
+	double ang_speed, ang_diff;
+	double gain_to_ang_diff = -0.2;
+	ang_diff = 10000;
+	get_robot_pose();
 
+	double a[2], b[2];
+	a[0] = std::cos(goal_angle_);
+	a[1] = std::sin(goal_angle_);
+
+	b[0] = std::cos(robot_point_.z);
+	b[1] = std::sin(robot_point_.z);
+
+	calc_vectors_interior_angle(a[0], a[1], b[0], b[1], ang_diff);
+
+	while(std::abs(ang_diff) > goal_angle_th){
+		get_robot_pose();
+		ang_diff = robot_point_.z - goal_angle_;
+		if (ang_diff > 0)ang_speed = -speed;
+		else ang_speed = speed;
+		publish_vel(0, ang_speed);
+		loop_rate.sleep();
+	}
+	return true;
 }
 
 bool Action::object(){
@@ -63,19 +110,37 @@ bool Action::object(){
 }
 
 bool Action::on_goal(){
-	return 0;
+
+	double goal_distance_th, dx, dy, dis;
+
+	goal_distance_th = 0.2;
+	get_robot_pose();
+
+	dx = robot_point_.x - goal_point_.x;
+	dy = robot_point_.y - goal_point_.y;
+
+	dis = std::sqrt(dx*dx + dy*dy);
+
+	std::cout << "goal--robot dis:" << dis << std::endl;
+
+	if (dis < goal_distance_th){
+		return true;
+	}
+	return false;
 }
-		
-void Action::publish_vel(double speed, double ang_speed){
+
+	void Action::publish_vel(double speed, double ang_speed){
 	geometry_msgs::Twist vel;
 	vel.linear.x = speed;
 	if(ang_speed > ang_speed_max_)ang_speed = ang_speed_max_;
 	else if(ang_speed < -ang_speed_max_)ang_speed = -ang_speed_max_;
 	vel.angular.z = ang_speed;
+
+	std::cout << "vel:" << vel.linear.x << " " << vel.angular.z << std::endl;
 	velocity_pub_.publish(vel);
 }
 
-double Action::calc_goal_angle(geometry_msgs::Point start_point, geometry_msgs::Point finish_point, bool rotate){
+bool Action::calc_goal_angle(const geometry_msgs::Point start_point, const geometry_msgs::Point finish_point, const bool rotate, double& ang){
 	double a1, a2;
 
 	if (rotate > 0){
@@ -87,11 +152,11 @@ double Action::calc_goal_angle(geometry_msgs::Point start_point, geometry_msgs::
 		a2 = (finish_point.y - start_point.y);
 	}
 
-
-	return std::atan2(a2, a1);
+	ang = std::atan2(a2, a1);
+	return true;
 }
 
-double Action::calc_distance_line(geometry_msgs::Point start_point, geometry_msgs::Point finish_point, geometry_msgs::Point robot_point){
+bool Action::calc_dis_diff(const geometry_msgs::Point start_point, const geometry_msgs::Point finish_point, const geometry_msgs::Point robot_point, double& distance){
 	//vector a[a1, a2]:sp->fp
 	//vector b[b1, b2]:sp->rp
 	
@@ -106,22 +171,24 @@ double Action::calc_distance_line(geometry_msgs::Point start_point, geometry_msg
 	double len_b = std::sqrt(b1*b1+b2*b2);	
 	
 	bool sign = false;// + or -
-	in_ang = calc_vectors_interior_angle(a1, a2, b1, b2);
+	if(!calc_vectors_interior_angle(a1, a2, b1, b2, in_ang))return false;
 	if (in_ang > 0)sign = true;
 	else sign = false;
 	
 	double c = len_b*std::cos(in_ang);
-	double distance = std::sqrt(len_b*len_b - c*c);
+	distance = std::sqrt(len_b*len_b - c*c);
 
-	if (sign == true)return distance;
-	else return -distance;
+	if (sign != true){
+		distance = -distance;
+	}
+	return true;
 }
 
-double Action::calc_angToline(geometry_msgs::Point start_point, geometry_msgs::Point finish_point, geometry_msgs::Point robot_point){
+bool Action::calc_ang_diff(const geometry_msgs::Point start_point, const geometry_msgs::Point finish_point, const geometry_msgs::Point robot_point, double& in_ang){
 	//vector a[a1, a2]:fp->sp
 	//vector b[b1, b2]:fp->rp
 	
-	double a1, a2, b1, b2, in_ang;
+	double a1, a2, b1, b2;
 
 	a1 = start_point.x - finish_point.x;
 	a2 = start_point.y - finish_point.y;
@@ -129,24 +196,45 @@ double Action::calc_angToline(geometry_msgs::Point start_point, geometry_msgs::P
 	b1 = robot_point.x - finish_point.x;
 	b2 = robot_point.y - finish_point.y;
 	
-	in_ang = calc_vectors_interior_angle(a1, a2, b1, b2);
-	return in_ang;
+	if(calc_vectors_interior_angle(a1, a2, b1, b2, in_ang)){
+		return true;
+	}
+	else{
+		return false;
+	}
 }
 
-double Action::calc_vectors_interior_angle(const double a1, const double a2, const double b1, const double b2){
+bool Action::calc_vectors_interior_angle(const double a1, const double a2, const double b1, const double b2, double& ang){
 
 	double len_a = std::sqrt(a1*a1 + a2*a2);
 	double len_b = std::sqrt(b1*b1 + b2*b2);
 	
+	if (len_a == 0 || len_b == 0){
+		ang = M_PI / 2;
+		return true;
+	}
+	
 	double inner_product = a1*b1 + a2*b2;
-	double ang = std::acos(inner_product / (len_a * len_b));
+	ang = std::acos(inner_product / (len_a * len_b));
 
 	double outer_product1 = a2*0 - 0*b2;
 	double outer_product2 = 0*b1 - a1*0;
 	double outer_product3 = a1*b2 - a2*b1;
 	
-	if (outer_product3 < 0)return -ang;
-	else return ang;
+	if (outer_product3 < 0)ang = -ang;
+	return true;
+}
+
+bool Action::calc_pose_diff(const double robot_yaw, double& ang){
+
+	double a1, a2, b1, b2;
+	a1 = goal_point_.x - start_point_.x;
+	a2 = goal_point_.y - start_point_.y;
+	b1 = std::cos(robot_yaw);
+	b2 = std::sin(robot_yaw);
+
+	if(calc_vectors_interior_angle(a1, a2, b1, b2, ang))return true;
+	return false;
 }
 
 void Action::scanCallback(const sensor_msgs::LaserScanPtr& msg){

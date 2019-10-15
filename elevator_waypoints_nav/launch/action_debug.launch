@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+
+<launch>
+	<node name="action_node" pkg="elevator_waypoints_nav" type="action_node" output="screen" />
+	<node pkg="tf" type="static_transform_publisher" name="mapTobase_broadcaster" args="0 0 0 0 0 0 map odom 1" output="screen" />
+</launch>
+

@@ -1,0 +1,7 @@
+#!/usr/bin/bash
+
+source /home/icart/catkin_ws/devel/setup.bash;
+gnome-terminal -- bash -c "roslaunch elevator_waypoints_nav robot_simulator.launch; bash" 
+sleep 10
+gnome-terminal -- bash -c "roslaunch elevator_waypoints_nav action_debug.launch ;bash"
+
