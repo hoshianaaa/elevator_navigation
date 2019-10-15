@@ -50,6 +50,7 @@ void Action::move(){
 	get_robot_pose();
 	while(!on_goal()){
 		get_robot_pose();
+		ros::spinOnce();
 		while(object()){
 			publish_vel(0,0);
 			loop_rate.sleep();
@@ -238,6 +239,7 @@ bool Action::calc_pose_diff(const double robot_yaw, double& ang){
 }
 
 void Action::scanCallback(const sensor_msgs::LaserScanPtr& msg){
+	std::cout << "scan callback" << std::endl;
 }
 
 void Action::print_env_data(){
