@@ -51,11 +51,12 @@ void Action::move(){
 	get_robot_pose();
 	//loop_rate.sleep();
 	while(!on_goal()){
-		std::cout << "debug" << StopRobot() << std::endl;
+		ros::spinOnce();
 		get_robot_pose();
 		while(StopRobot()){
 			publish_vel(0,0);
 			loop_rate.sleep();
+			ros::spinOnce();
 		}
 		geometry_msgs::Point sp,fp,rp;
 		sp = start_point_;
@@ -98,6 +99,7 @@ bool Action::rotate(double speed, double goal_angle_th){
 	calc_vectors_interior_angle(a[0], a[1], b[0], b[1], ang_diff);
 
 	while(std::abs(ang_diff) > goal_angle_th){
+		ros::spinOnce();
 		get_robot_pose();
 		ang_diff = robot_point_.z - goal_angle_;
 		if (ang_diff > 0)ang_speed = -speed;
@@ -143,7 +145,7 @@ bool Action::on_goal(){
 	else if(ang_speed < -ang_speed_max_)ang_speed = -ang_speed_max_;
 	vel.angular.z = ang_speed;
 
-	std::cout << "vel:" << vel.linear.x << " " << vel.angular.z << std::endl;
+	//std::cout << "vel:" << vel.linear.x << " " << vel.angular.z << std::endl;
 	velocity_pub_.publish(vel);
 }
 
