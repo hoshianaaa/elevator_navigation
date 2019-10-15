@@ -19,6 +19,7 @@ Action::Action(geometry_msgs::Point sp, geometry_msgs::Point fp, bool rotate)
 	ang_speed_max_ = 0.5;
 
 	freq_ = 10;
+	sensor_range_ = M_PI / 180 * 5;
 }
 
 bool Action::get_robot_pose(){
@@ -48,12 +49,14 @@ void Action::move(){
 
 	ros::Rate loop_rate(freq_);
 	get_robot_pose();
+	//loop_rate.sleep();
 	while(!on_goal()){
-		get_robot_pose();
 		ros::spinOnce();
-		while(object()){
+		get_robot_pose();
+		while(StopRobot()){
 			publish_vel(0,0);
 			loop_rate.sleep();
+			ros::spinOnce();
 		}
 		geometry_msgs::Point sp,fp,rp;
 		sp = start_point_;
@@ -96,6 +99,7 @@ bool Action::rotate(double speed, double goal_angle_th){
 	calc_vectors_interior_angle(a[0], a[1], b[0], b[1], ang_diff);
 
 	while(std::abs(ang_diff) > goal_angle_th){
+		ros::spinOnce();
 		get_robot_pose();
 		ang_diff = robot_point_.z - goal_angle_;
 		if (ang_diff > 0)ang_speed = -speed;
@@ -106,7 +110,11 @@ bool Action::rotate(double speed, double goal_angle_th){
 	return true;
 }
 
-bool Action::object(){
+bool Action::StopRobot(){
+	if (sensor_data_min_ < 0.6){
+		std::cout << "stop!!" << sensor_data_min_ <<  std::endl;
+		return 1;
+	}
 	return 0;
 }
 
@@ -137,7 +145,7 @@ bool Action::on_goal(){
 	else if(ang_speed < -ang_speed_max_)ang_speed = -ang_speed_max_;
 	vel.angular.z = ang_speed;
 
-	std::cout << "vel:" << vel.linear.x << " " << vel.angular.z << std::endl;
+	//std::cout << "vel:" << vel.linear.x << " " << vel.angular.z << std::endl;
 	velocity_pub_.publish(vel);
 }
 
@@ -209,7 +217,7 @@ bool Action::calc_vectors_interior_angle(const double a1, const double a2, const
 
 	double len_a = std::sqrt(a1*a1 + a2*a2);
 	double len_b = std::sqrt(b1*b1 + b2*b2);
-	
+
 	if (len_a == 0 || len_b == 0){
 		ang = M_PI / 2;
 		return true;
@@ -238,14 +246,44 @@ bool Action::calc_pose_diff(const double robot_yaw, double& ang){
 	return false;
 }
 
+class sensor_data{
+	public:
+		double data;
+		double angle;
+};
+
 void Action::scanCallback(const sensor_msgs::LaserScanPtr& msg){
+<<<<<<< HEAD
 	std::cout << "scan callback" << std::endl;
+=======
+	std::cout << "scan call back" << std::endl;
+	int num = (msg->angle_max - msg->angle_min) / msg->angle_increment;
+
+	std::vector<sensor_data> datas;
+	for (int i=0;i<num;i++){
+		sensor_data d;
+		d.data = msg->ranges[i];
+		d.angle = msg->angle_min + i * msg->angle_increment;
+		if (d.angle < sensor_range_ && d.angle > -sensor_range_){
+			datas.push_back(d);
+		}
+	}
+
+	double min = 10000;
+	for (int i=0;i < datas.size();i++){
+		if (datas[i].data > 0.1)min = std::min(datas[i].data, min);
+	}
+
+	sensor_data_min_ = min;
+	std::cout << "sensor data mini:" <<  sensor_data_min_ << std::endl;
+>>>>>>> bug
 }
 
 void Action::print_env_data(){
 	std::cout << "start_point = " << "(" << start_point_.x << ", " << start_point_.y << ", " << start_point_.z << ")" <<  std::endl;
 	std::cout << "goal_point = " << "(" << goal_point_.x << ", " << goal_point_.y << ", " << goal_point_.z << ")" <<  std::endl;
 	std::cout << "goal_angle:" << goal_angle_ << std::endl;
+	std::cout << "sensor_data_min:" << sensor_data_min_ << std::endl;
 }
 
 void Action::print_robot_data(){

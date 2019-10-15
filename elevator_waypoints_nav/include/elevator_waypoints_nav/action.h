@@ -14,7 +14,7 @@ public:
 	bool get_robot_pose();
 	void move();
 	bool rotate(double speed, double goal_angel_th);
-	bool object();
+	bool StopRobot();
 
 	bool on_goal();
 
@@ -49,6 +49,9 @@ private:
 	double speed_;
 	double ang_speed_max_;
 	double freq_;
+
+	double sensor_range_;
+	double sensor_data_min_;
 
 };
 
