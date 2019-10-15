@@ -1,40 +1,44 @@
+#include <ros/ros.h>
 #include <elevator_waypoints_nav/waypoints_nav.h>
 
 WaypointsNavigation::WaypointsNavigation() :
 	move_base_action_("move_base", true),
-	rate_(10)
+	rate_(10),
+	dist_err_(0.8)
 {
 
-	std::cout << "test" << std::endl;
 	while((move_base_action_.waitForServer(ros::Duration(1.0)) == false) && (ros::ok() == true))
 	{
 		ROS_INFO("waiting...");
 	}
 
+	std::string filename;
+	filename = "/home/icart/catkin_ws/src/elevator_navigation/elevator_waypoints_nav/waypoints_cfg/waypoints.yaml";
+
 	ros::NodeHandle private_nh("~");
-	private_nh.param("filename", filename, filename)
+	private_nh.param("filename", filename, filename);
 	ROS_INFO_STREAM("Read waypoints data from " << filename);
 	if(!readFile(filename)) {
 			ROS_ERROR("Failed loading waypoints file");
-	} else {
-			last_waypoint_ = waypoints_.poses.end()-2;
-			finish_pose_ = waypoints_.poses.end()-1;
-			computeWpOrientation();
 	}
-		current_waypoint_ = waypoints_.poses.begin();
-	} else {
-			ROS_ERROR("waypoints file doesn't have name");
-	}
-	world_frame_ = "map";
 
-	elevator_front_pose_.position.x = 3;
+	world_frame_ = "map";
+	robot_frame_ = "base_link";
+
+	elevator_front_pose_.position.x = 0;
 	elevator_front_pose_.position.y = 0;
 	elevator_front_pose_.orientation = tf::createQuaternionMsgFromYaw(M_PI);
 
+	start_floor_ = 3;
+
 	elevator_point_.x = 0;
-	elevator_point_.y = 0;
+	elevator_point_.y = -3;
 
+	current_waypoint_ = waypoints_.begin();
+	finish_waypoint_ = waypoints_.end() - 1;
+	computeWpOrientation();
 
+	dist_err_ = 0.5;
 }
 
 
@@ -47,43 +51,61 @@ void WaypointsNavigation::startNavigationGL(const geometry_msgs::Point &dest){
 
 void WaypointsNavigation::startNavigationGL(const geometry_msgs::Pose &dest){
 	move_base_msgs::MoveBaseGoal move_base_goal;
-	move_base_goal.target_pose.header.stamp = ros::Time::now();
-	move_base_goal.target_pose.header.frame_id = world_frame_;
+	move_base_goal.target_pose.header.stamp = ros::Time::now(); move_base_goal.target_pose.header.frame_id = world_frame_;
 	move_base_goal.target_pose.pose.position = dest.position;
 	move_base_goal.target_pose.pose.orientation = dest.orientation;
 	move_base_action_.sendGoal(move_base_goal);
 	std::cout << "send goal" << std::endl;
 }
 
-void computeWpOrientation(){
+void WaypointsNavigation::startNavigationGL(const Waypoint &wp){
+	startNavigationGL(wp.geometry_msg);
+}
+
+void WaypointsNavigation::computeWpOrientation(){
 	double goal_direction;
-	for (std::vector<Waypoint>::iterator it = waypoints_.begin(); it != finish_pose_; it++) {
+	for (std::vector<Waypoint>::iterator it = waypoints_.begin(); it != finish_waypoint_; it++) {
+		std::cout << it->floor << std::endl;
 		if ((it)->floor != (it+1)->floor){
 			goal_direction = atan2(elevator_front_pose_.position.y - (it)->geometry_msg.position.y,
-																		elevator_front_pose_.position.x - (it)->position.x);
+																		elevator_front_pose_.position.x - (it)->geometry_msg.position.x);
 		}
 		else
 		{
 			goal_direction = atan2((it+1)->geometry_msg.position.y - (it)->geometry_msg.position.y,
 														 (it+1)->geometry_msg.position.x - (it)->geometry_msg.position.x);
 		}
-		(it)->orientation = tf::createQuaternionMsgFromYaw(goal_direction);
-		waypoints_.geometry_msg.header.frame_id = world_frame_;
+		(it)->geometry_msg.orientation = tf::createQuaternionMsgFromYaw(goal_direction);
 	}
 }
+
+bool WaypointsNavigation::onNavigationPoint(const geometry_msgs::Point &dest, double dist_err = 0.8){
+	tf::StampedTransform robot_gl = getRobotPosGL();
+
+	const double wx = dest.x;
+	const double wy = dest.y;
+	const double rx = robot_gl.getOrigin().x();
+	const double ry = robot_gl.getOrigin().y();
+	const double dist = std::sqrt(std::pow(wx - rx, 2) + std::pow(wy - ry, 2));
+
+	return dist < dist_err;
+}
+
 
 void WaypointsNavigation::sleep(){
 	rate_.sleep();
 	ros::spinOnce();
 }
 
-void WaypointsNavigation::run(){
-	while(ros::ok()){
+void WaypointsNavigation::elevator_action(){
+	Action in_elevator(elevator_front_pose_.position, elevator_point_, true);
+	Action out_elevator( elevator_point_, elevator_front_pose_.position, false);
 
+	std::cout << "in elevator" << std::endl;
+	in_elevator.move();
 
-
-		sleep();
-	}
+	std::cout << "out elevator" << std::endl;
+	out_elevator.move();
 }
 
 bool WaypointsNavigation::readFile(const std::string &filename){
@@ -153,7 +175,6 @@ bool WaypointsNavigation::readFile(const std::string &filename){
 
 	}catch(YAML::ParserException &e){
 			return false;
-
 	}catch(YAML::RepresentationException &e){
 			return false;
 	}
@@ -161,9 +182,55 @@ bool WaypointsNavigation::readFile(const std::string &filename){
 	return true;
 }
 
+tf::StampedTransform WaypointsNavigation::getRobotPosGL(){
+	tf::StampedTransform robot_gl;
+	try{
+		tf_listener_.waitForTransform(world_frame_, robot_frame_, ros::Time(0.0), ros::Duration(1.0));
+		tf_listener_.lookupTransform(world_frame_, robot_frame_, ros::Time(0.0), robot_gl);
+	}catch(tf::TransformException &e){
+		ROS_WARN_STREAM("tf::TransformException: " << e.what());
+	}
+
+	return robot_gl;
+}
+
+void WaypointsNavigation::run(){
+
+	int now_floor, next_floor;
+
+	now_floor = start_floor_;
+	while(ros::ok()){
+
+		next_floor = current_waypoint_->floor;
+
+		if (now_floor == next_floor){
+			startNavigationGL(*current_waypoint_);
+			while(!onNavigationPoint(current_waypoint_->geometry_msg.position, dist_err_)) {}
+
+		} else {
+
+			startNavigationGL(elevator_front_pose_);
+			while(!onNavigationPoint(elevator_front_pose_.position, dist_err_)) {}
+			move_base_action_.cancelAllGoals();
+			elevator_action();
+			startNavigationGL(*current_waypoint_);
+			while(!onNavigationPoint(current_waypoint_->geometry_msg.position, dist_err_)) {}
+
+			now_floor = current_waypoint_->floor;
+		}
+
+		if (current_waypoint_ == finish_waypoint_){
+			std::cout << "finish" << std::endl;
+			break;
+		}
+		current_waypoint_++;
+	}
+}
+
 
 int main(int argc, char *argv[]){
 	ros::init(argc, argv, ROS_PACKAGE_NAME);
 	WaypointsNavigation w_nav;
+	w_nav.run();
 	return 0;
 }
