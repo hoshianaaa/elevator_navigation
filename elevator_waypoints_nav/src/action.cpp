@@ -253,9 +253,6 @@ class sensor_data{
 };
 
 void Action::scanCallback(const sensor_msgs::LaserScanPtr& msg){
-<<<<<<< HEAD
-	std::cout << "scan callback" << std::endl;
-=======
 	std::cout << "scan call back" << std::endl;
 	int num = (msg->angle_max - msg->angle_min) / msg->angle_increment;
 
@@ -276,7 +273,6 @@ void Action::scanCallback(const sensor_msgs::LaserScanPtr& msg){
 
 	sensor_data_min_ = min;
 	std::cout << "sensor data mini:" <<  sensor_data_min_ << std::endl;
->>>>>>> bug
 }
 
 void Action::print_env_data(){

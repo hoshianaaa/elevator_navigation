@@ -79,6 +79,8 @@ bool readFile(const std::string &filename){
 							(*wp_node)[i]["point"]["x"] >> pose.position.x;
 							(*wp_node)[i]["point"]["y"] >> pose.position.y;
 							(*wp_node)[i]["point"]["z"] >> pose.position.z;
+							(*wp_node)[i]["point"]["floor"] >> pose.position.z;
+
 
 							waypoints_.poses.push_back(pose);
 
@@ -98,6 +100,7 @@ bool readFile(const std::string &filename){
 					(*fp_node)["pose"]["position"]["x"] >> pose.position.x;
 					(*fp_node)["pose"]["position"]["y"] >> pose.position.y;
 					(*fp_node)["pose"]["position"]["z"] >> pose.position.z;
+					(*fp_node)["pose"]["position"]["floor"] >> pose.position.z;
 
 					(*fp_node)["pose"]["orientation"]["x"] >> pose.orientation.x;
 					(*fp_node)["pose"]["orientation"]["y"] >> pose.orientation.y;
