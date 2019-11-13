@@ -1,0 +1,11 @@
+yolo_model:
+  config_file:
+    name: my-dataset.cfg
+  weight_file:
+    name: my-dataset_900.weights
+  threshold:
+    value: 0.05
+  detection_classes:
+    names:
+      - elevator_panel
+
