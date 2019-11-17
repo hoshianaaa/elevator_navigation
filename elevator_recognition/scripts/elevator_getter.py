@@ -20,13 +20,21 @@ IMAGE_HEIGHT = 2450
 
 class elevator_getter():
 	def __init__(self):
-		self.detection_subscriber = rospy.Subscriber("/darknet_ros/bounding_boxes", BoundingBoxes, self.bounding_boxes_callback)
-	def bounding_boxes_callback(self, detection_data):
-		xmin = detection_data.bounding_boxes[0].xmin
-		xmax = detection_data.bounding_boxes[0].xmax
-		ymin = detection_data.bounding_boxes[0].ymin
-		ymax = detection_data.bounding_boxes[0].ymax
+		self.bounding_box_subscriber = rospy.Subscriber("/darknet_ros/bounding_boxes", BoundingBoxes, self.bounding_boxes_callback)
+		self.depth_image_subscriber = rospy.Subscriber("/camera/depth/image_rect_raw", Image, self.depth_image_callback)
+		self.image_panel_depth = 0
+
+	def bounding_boxes_callback(self, msg):
+		xmin = msg.bounding_boxes[0].xmin
+		xmax = msg.bounding_boxes[0].xmax
+		ymin = msg.bounding_boxes[0].ymin
+		ymax = msg.bounding_boxes[0].ymax
 		print("x,y", (xmax - xmin)/2, (ymax - ymin)/2)
+
+	def depth_image_callback(self, msg):
+		print("depth!")
+		
+		
 
 def main():
 	rospy.init_node('elevator_getter')	
