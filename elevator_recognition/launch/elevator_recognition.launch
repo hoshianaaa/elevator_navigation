@@ -2,5 +2,5 @@
 
 <launch>
   <include file="$(find elevator_recognition)/launch/darknet_ros.launch"/>
-  <include file="$(find realsense2_camera)/launch/rs_camera.launch"/>
+  <include file="$(find freenect_launch)/launch/freenect.launch"/>
 </launch>
