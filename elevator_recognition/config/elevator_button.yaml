@@ -1,0 +1,11 @@
+yolo_model:
+
+  config_file:
+    name: elevator_button.cfg
+  weight_file:
+    name: elevator_button_900.weights
+  threshold:
+    value: 0.5
+  detection_classes:
+    names:
+      - elevator_button
