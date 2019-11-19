@@ -49,7 +49,7 @@ void PanelAction::scanCallback(const sensor_msgs::LaserScan::ConstPtr& msg){
 	min_scan_ = 10000;
 	for (int i=0;i<msg->ranges.size();i++){
 		double d = msg->ranges[i];
-		if (d > 0.3 && d < min_scan_)min_scan_ = d;
+		if (d > 0.1 && d < min_scan_)min_scan_ = d;
 	}
 	std::cout << "min_scan:" << min_scan_ << std::endl;
 }
@@ -65,13 +65,13 @@ bool PanelAction::rotate(double angle)
 	else if (target_angle < -M_PI)target_angle += 2*M_PI;
 
 
-	while(!((robot_point_.z > target_angle - 0.1) && (robot_point_.z < target_angle + 0.1))){
+	while(!((robot_point_.z > target_angle - 0.03) && (robot_point_.z < target_angle + 0.03))){
 		get_robot_pose();
 		std::cout << "target angle:" << target_angle;
 		std::cout << " now :" << robot_point_.z;	
 		geometry_msgs::Twist vel;
-		if (angle > 0)vel.angular.z = 0.3;
-		else vel.angular.z = -0.3;
+		if (angle > 0)vel.angular.z = 0.1;
+		else vel.angular.z = -0.1;
 		velocity_pub_.publish(vel);
 		std::cout << " ang vel :" << vel.angular.z << std::endl;	
 		loop_rate.sleep();
@@ -105,7 +105,7 @@ bool PanelAction::go_panel(double stop_distance){
 	while(1){
 		if (min_scan_ < stop_distance)break;
 		geometry_msgs::Twist vel;
-		vel.linear.x = 0.3;
+		vel.linear.x = 0.1;
 		velocity_pub_.publish(vel);
 		std::cout << "straight" << std::endl;
 		loop_rate.sleep();
@@ -123,7 +123,7 @@ bool PanelAction::back_home(){
 		double now_dis = std::sqrt(dx * dx + dy * dy);
 		if (now_dis < stop_distance)break;
 		geometry_msgs::Twist vel;
-		vel.linear.x = -0.3;
+		vel.linear.x = -0.1;
 		velocity_pub_.publish(vel);
 		std::cout << "straight" << std::endl;
 		loop_rate.sleep();
@@ -135,15 +135,15 @@ bool PanelAction::back_home(){
 void PanelAction::run(bool inverse)
 {
 	int counter = 0;
-	double k = -0.003;
+	double k = -0.0002;
 	while(1){
-		if (inverse)rotate(-M_PI/4);
-		else rotate(M_PI/4);
 		if (darknet_wait(5))break;
+		if (inverse)rotate(-M_PI/8);
+		else rotate(M_PI/8);
 	}
-	std::cout << "darknet_data:" << darknet_data_ << std::endl;
+	std::cout << "darknet_data rotate:" << darknet_data_ * k << std::endl;
 	rotate(darknet_data_ * k);
-	go_panel(0.6);	
+	go_panel(0.2);	
 	back_home();
 	std::cout << "rp:" << robot_point_.z << "hp:" << home_point_.z << std::endl;
 	if (inverse)rotate(home_point_.z - robot_point_.z);
