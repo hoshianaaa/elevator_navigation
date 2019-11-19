@@ -10,6 +10,10 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   std_srvs
   tf
+  laser_geometry
+  pcl_conversions
+  pcl_msgs
+  pcl_ros
 )
 
 find_package(PkgConfig)
