@@ -38,7 +38,6 @@ include_directories(
 
 add_library(action src/action.cpp)
 add_library(panel_action src/panel_action.cpp)
-add_library(search_panel src/search_panel.cpp)
 
 add_executable(action_node src/action_node.cpp)
 target_link_libraries(action_node
@@ -50,7 +49,6 @@ add_executable(panel_action_node src/panel_action_node.cpp)
 target_link_libraries(panel_action_node
 	${catkin_LIBRARIES}
 	panel_action
-	search_panel
 )
 
 add_executable(waypoints_nav src/waypoints_nav.cpp)
