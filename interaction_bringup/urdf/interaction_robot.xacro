@@ -7,6 +7,7 @@
   <!-- Import Rviz colors -->
   <xacro:include filename="$(find icart_mini_description)/urdf/materials.xacro" />
   <xacro:include filename="$(find orne_description)/urdf/interaction_robot.gazebo"/>
+	<xacro:include filename="$(find icart_mini_description)/urdf/sensors/hokuyo.urdf.xacro"/>
 
   <!-- <xacro:include filename="$(find icart_mini_description)/urdf/sensors/imu.urdf.xacro"/> <xacro:sensor_imu name="imu" parent="base_link" size="0.05 0.05 0.05">
       <origin xyz="0.04 0.0 0.15" rpy="0 0 3.14"/>
@@ -215,6 +216,11 @@
     </actuator>
   </transmission>
 
+
+	<!-- 2d urg -->
+	<xacro:sensor_hokuyo name="hokuyo" parent="base_link">
+		<origin xyz="0.27 0 0.2485" rpy="0 0 0"/>
+	</xacro:sensor_hokuyo>
   <!-- arm -->
 
   <joint type="fixed" name="arm_base_joint">

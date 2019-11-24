@@ -7,7 +7,7 @@
   <arg name="ypspur_params"       default="/usr/local/share/robot-params/icart-mini.param"/>
   <arg name="use_eth_urg"         default="false"/>
   <arg name="urg_ip"              default="192.168.0.10" if="$(arg use_eth_urg)"/>
-  <arg name="scan_dev"            default="/dev/sensors/hokuyo_urg" unless="$(arg use_eth_urg)"/>
+  <arg name="scan_dev"            default="/dev/sensors/hokuyo_H1110848" unless="$(arg use_eth_urg)"/>
 
   <node name="ypspur_coordinator_bridge" pkg="icart_mini_driver" type="ypspur_coordinator_bridge" args="$(arg ypspur_params)" output="screen"/>
 
