@@ -1,0 +1,62 @@
+product_id: 0x0009 # RS485USB
+
+joint_0_driver:
+  joint_name: arm_joint_0
+  id: 0
+  min_angle: -180
+  max_angle:  180
+  stretch: 60
+  speed: 127
+  current_limit: 5000
+  temperature_limit: 80
+
+joint_1_driver:
+  joint_name: arm_joint_1
+  id: 1
+  min_angle: -180
+  max_angle:  180
+  stretch: 60
+  speed: 127
+  current_limit: 5000
+  temperature_limit: 80
+
+joint_2_driver:
+  joint_name: arm_joint_2
+  id: 2
+  min_angle: -180
+  max_angle:  180
+  stretch: 60
+  speed: 127
+  current_limit: 5000
+  temperature_limit: 80
+
+joint_3_driver:
+  joint_name: arm_joint_3
+  id: 3
+  min_angle: -240
+  max_angle:  0
+  stretch: 0
+  speed: 127
+  current_limit: 5000
+  temperature_limit: 80
+
+joint_4_driver:
+  joint_name: arm_joint_4
+  id: 4
+  min_angle: -180
+  max_angle:  180
+  stretch: 60
+  speed: 127
+  current_limit: 5000
+  temperature_limit: 80
+
+joint_5_driver:
+  joint_name: arm_joint_5
+  id: 5
+  min_angle: -180
+  max_angle:  180
+  stretch: 60
+  speed: 127
+  current_limit: 5000
+  temperature_limit: 80
+

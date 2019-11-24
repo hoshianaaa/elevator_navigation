@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+
+<launch>
+  <!-- Load Kondo ICS parameters -->
+  <rosparam file="$(find interaction_bringup)/config/interaction_arm_driver.yaml" command="load" ns="kondo_driver"/>
+  <!-- Start ICS driver -->
+  <node name="kondo_driver" pkg="kondo_driver" type="kondo_driver" args="fake:=true joint_0_driver joint_1_driver joint_2_driver joint_3_driver joint_4_driver joint_5_driver" output="screen" />
+  <!-- Load URDF model -->
+  <!--param name="robot_description" command="$(find xacro)/xacro.py '$(find interaction_robot_description)/urdf/interaction_robot.xacro'" /-->
+  <!-- Load joint controller configurations from YAML file to parameter server -->
+  <rosparam file="$(find interaction_bringup)/config/interaction_arm_controller.yaml" command="load"/>
+  <!-- Load the controllers -->
+  <node name="controller_spawner_2" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="--shutdown-timeout 0.1 arm_joint_state_controller interaction_arm_controller"/>
+  <!-- Robot state publisher -->
+  <!--node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" output="screen" /-->
+
+</launch>
