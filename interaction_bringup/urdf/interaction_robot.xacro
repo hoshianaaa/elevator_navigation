@@ -221,6 +221,25 @@
 	<xacro:sensor_hokuyo name="hokuyo" parent="base_link">
 		<origin xyz="0.27 0 0.2485" rpy="0 0 0"/>
 	</xacro:sensor_hokuyo>
+
+	<!-- kinect -->
+  <joint type="fixed" name="kinect_joint">
+    <parent link="base_link"/>
+    <child link="camera_link"/>
+    <origin xyz="0.14 0.0 1.40" rpy="0 0.5 0"/>
+  </joint>
+
+   <link name="camera_link">
+    <visual name="visual">
+      <origin xyz="0.0 0 0.0" rpy="0 0.5 0"/>
+      <geometry>
+	      <box size=".05 .2 .05"/>
+      </geometry>
+      <material name="orange"/>
+    </visual>
+  </link>
+
+
   <!-- arm -->
 
   <joint type="fixed" name="arm_base_joint">

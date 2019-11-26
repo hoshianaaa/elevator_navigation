@@ -3,7 +3,7 @@ yolo_model:
   config_file:
     name: elevator_button.cfg
   weight_file:
-    name: elevator_button_900.weights
+    name: elevator_button_2900.weights
   threshold:
     value: 0.5
   detection_classes:

@@ -6,7 +6,7 @@
   <arg name="image" default="/image_data" />
 
   <!-- Config and weights folder. -->
-  <arg name="yolo_weights_path"          default="$(find elevator_recognition)/yolo_network_config/weights"/>
+  <arg name="yolo_weights_path"          default="/home/icart/"/>
   <arg name="yolo_config_path"           default="$(find elevator_recognition)/yolo_network_config/cfg"/>
 
   <!-- ROS and network parameter files -->
