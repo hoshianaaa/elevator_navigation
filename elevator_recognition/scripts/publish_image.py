@@ -9,7 +9,7 @@ def operator():
 	rospy.init_node('operator', anonymous=True)
 	pub = rospy.Publisher('/camera/rgb/image_color', Image, queue_size=10)
 	# read image
-	filepath = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'elevator_panel.jpg')
+	filepath = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'elevator_panel2.jpg')
 	im = cv2.imread(filepath, cv2.IMREAD_COLOR)
 	# make bridge
 	bridge = CvBridge()
