@@ -3,5 +3,4 @@
 <launch>
   <include file="$(find elevator_recognition)/launch/darknet_ros.launch"/>
   <include file="$(find freenect_launch)/launch/freenect.launch"/>
-  <node name="elevator_getter" pkg="elevator_recognition" type="elevator_getter.py" />
 </launch>

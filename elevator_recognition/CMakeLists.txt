@@ -10,6 +10,12 @@ project(elevator_recognition)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
+  tf
+  pcl_ros
+  pcl_conversions
+  pcl_msgs
+  geometry_msgs
+  sensor_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -203,3 +209,7 @@ include_directories(
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+add_executable(bounding_box_coordinater src/bounding_box_coordinater.cpp)
+target_link_libraries(bounding_box_coordinater
+	${catkin_LIBRARIES}
+)
