@@ -30,8 +30,13 @@ class bounding_box_listener():
 
     bounding_box_x = float(int((xmax - xmin)/2 + xmin))
     bounding_box_y = float(int((ymax - ymin)/2 + ymin))
+
+    p = Point()
+    p.x = bounding_box_x
+    p.y = bounding_box_y
+    p.z = 0.0
   
-    self.bounding_box_pos_pub.publish([bounding_box_x, bounding_box_y, 0])
+    self.bounding_box_pos_pub.publish(p)
 
 def main():
   rospy.init_node('bounding_box_listener')	
