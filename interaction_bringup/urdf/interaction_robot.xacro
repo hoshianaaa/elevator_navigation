@@ -226,7 +226,7 @@
   <joint type="fixed" name="kinect_joint">
     <parent link="base_link"/>
     <child link="camera_link"/>
-    <origin xyz="0.14 0.0 1.40" rpy="0 0.5 0"/>
+    <origin xyz="0.20 0.05 1.40" rpy="0 0.43 0.04"/>
   </joint>
 
    <link name="camera_link">
@@ -241,20 +241,13 @@
 
 
   <!-- arm -->
-  <joint type="fixed" name="up_bottun_finter">
+  <joint type="fixed" name="up_bottun_bar_joint">
     <parent link="base_link"/>
     <child link="up_bottun_bar"/>
-    <origin xyz="0.53 0.0 1.22" rpy="0 0 0"/>
+    <origin xyz="0.82 0.0 1.3" rpy="0 0 0"/>
   </joint>
  
   <link name="up_bottun_bar">
-    <visual name="visual">
-      <origin xyz="-0.25 0 0.0" rpy="0 0 0"/>
-      <geometry>
-	      <box size=".50 .02 .02"/>
-      </geometry>
-      <material name="orange"/>
-    </visual>
   </link>
 
   <joint type="fixed" name="arm_base_joint">

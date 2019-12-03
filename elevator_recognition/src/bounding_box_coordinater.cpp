@@ -1,5 +1,6 @@
 #include <ros/ros.h>
 #include <tf/transform_broadcaster.h>
+#include <tf/transform_listener.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <geometry_msgs/Point.h>
 #include <string>
@@ -14,6 +15,7 @@ public:
 private:
   ros::NodeHandle nh_;
   tf::TransformBroadcaster br_;
+  tf::TransformListener listener_;
   tf::Transform transform_;
   int tf_lock_;
   ros::Subscriber cloud_sub_;
@@ -31,7 +33,7 @@ boundingBoxCoordinater::boundingBoxCoordinater(){
   cloud_topic_ = "camera/depth/points";
   bounding_box_pos_topic_ = "bounding_box_pos";
   sensor_frame_ = "camera_depth_optical_frame";
-  target_frame_ = "button";
+  target_frame_ = "bottun";
   cloud_sub_ = nh_.subscribe(cloud_topic_, 1, &boundingBoxCoordinater::cloudCallback, this);
   bounding_box_pos_sub_ = nh_.subscribe(bounding_box_pos_topic_, 1, &boundingBoxCoordinater::boundingBoxPosCallback, this);
   int tf_broad_rate = 10;
@@ -81,7 +83,20 @@ void boundingBoxCoordinater::run(){
   ros::Rate r(10);
   while (ros::ok())
   {
-    if(!tf_lock_)br_.sendTransform(tf::StampedTransform(transform_, ros::Time::now(), sensor_frame_, target_frame_));
+    if(!tf_lock_){
+
+      br_.sendTransform(tf::StampedTransform(transform_, ros::Time::now(), sensor_frame_, target_frame_));
+      tf::StampedTransform arm_target_transform;
+      try{
+        listener_.lookupTransform("/up_bottun_bar", target_frame_, 
+        ros::Time(0), arm_target_transform);
+        std::cout << "x:" << arm_target_transform.getOrigin().x() << " y:" << arm_target_transform.getOrigin().y() << std::endl;
+      }
+      catch (tf::TransformException ex){
+        ROS_ERROR("%s",ex.what());
+        ros::Duration(1.0).sleep();
+      }
+    }
     std::cout << "run" << std::endl;  
     ros::spinOnce();
     r.sleep();

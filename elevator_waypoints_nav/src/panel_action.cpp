@@ -47,10 +47,8 @@ void PanelAction::scanCallback(const sensor_msgs::LaserScan::ConstPtr& msg){
 	pcl::fromROSMsg(cloud2, pcl_cloud);
 */
 	min_scan_ = 10000;
-	for (int i=0;i<msg->ranges.size();i++){
-		double d = msg->ranges[i];
-		if (d > 0.1 && d < min_scan_)min_scan_ = d;
-	}
+  double d = msg->ranges[msg->ranges.size()/2];
+  if (d > 0.1 && d < min_scan_)min_scan_ = d;
 	std::cout << "min_scan:" << min_scan_ << std::endl;
 }
 
@@ -64,14 +62,22 @@ bool PanelAction::rotate(double angle)
 	if (target_angle > M_PI)target_angle -= 2*M_PI;
 	else if (target_angle < -M_PI)target_angle += 2*M_PI;
 
+  int counter = 0;
+	while(1){
+    
+    if((robot_point_.z > target_angle - 0.01) && (robot_point_.z < target_angle + 0.01))counter++;
+    else counter = 0;
+    if(counter>100)break;
+    std::cout << counter << " " << robot_point_.z - target_angle << std::endl;
 
-	while(!((robot_point_.z > target_angle - 0.03) && (robot_point_.z < target_angle + 0.03))){
 		get_robot_pose();
 		std::cout << "target angle:" << target_angle;
 		std::cout << " now :" << robot_point_.z;	
 		geometry_msgs::Twist vel;
-		if (angle > 0)vel.angular.z = 0.1;
-		else vel.angular.z = -0.1;
+    double diff = target_angle - robot_point_.z;
+    vel.angular.z = diff;
+    if (diff < -0.2)diff = -0.2;
+    if (diff > 0.2)diff = 0.2;
 		velocity_pub_.publish(vel);
 		std::cout << " ang vel :" << vel.angular.z << std::endl;	
 		loop_rate.sleep();
