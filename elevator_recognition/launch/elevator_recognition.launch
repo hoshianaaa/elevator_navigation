@@ -4,5 +4,4 @@
   <include file="$(find elevator_recognition)/launch/darknet_ros.launch"/>
   <include file="$(find freenect_launch)/launch/freenect.launch"/>
   <node pkg="elevator_recognition" type="bounding_box_listener.py" name="bounding_box_listener" output="screen" />
-  <node pkg="elevator_recognition" type="bounding_box_coordinater" name="bounding_box_coordinater" output="screen" />
 </launch>

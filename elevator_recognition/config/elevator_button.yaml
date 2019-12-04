@@ -1,11 +1,12 @@
 yolo_model:
 
   config_file:
-    name: elevator_button2.cfg
+    name: data1204_net.cfg
   weight_file:
-    name: data1201-v2-tiny_2900.weights
+    name: data1204_net_final.weights
   threshold:
     value: 0.5
   detection_classes:
     names:
-      - elevator_button
+      - up
+      - up_on
