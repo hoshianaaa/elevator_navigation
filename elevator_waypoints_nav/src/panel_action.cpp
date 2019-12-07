@@ -8,11 +8,12 @@ PanelAction::PanelAction()
 	scan_sub_ = n_.subscribe("scan", 1, &PanelAction::scanCallback, this);
 	
 	darknet_lock_ = 0;
+	scan_lock_ = 1;
 	darknet_data_ = 0;
 	robot_frame_  = "base_link";
 	global_frame_ = "odom";
 	freq_ = 10;
-	min_scan_ = 10000;
+	min_scan_ = 0;
 
 	get_robot_pose();
 	home_point_ = robot_point_;
@@ -46,10 +47,8 @@ void PanelAction::scanCallback(const sensor_msgs::LaserScan::ConstPtr& msg){
 	pcl::PointCloud<pcl::PointXYZI> pcl_cloud;
 	pcl::fromROSMsg(cloud2, pcl_cloud);
 */
-	min_scan_ = 10000;
-  double d = msg->ranges[msg->ranges.size()/2];
-  if (d > 0.1 && d < min_scan_)min_scan_ = d;
-	std::cout << "min_scan:" << min_scan_ << std::endl;
+  scan_lock_ = 0;
+  min_scan_ = min_scan_ * 0.7 + msg->ranges[msg->ranges.size()/2] * 0.3;
 }
 
 bool PanelAction::rotate(double angle)
@@ -65,9 +64,9 @@ bool PanelAction::rotate(double angle)
   int counter = 0;
 	while(1){
     
-    if((robot_point_.z > target_angle - 0.01) && (robot_point_.z < target_angle + 0.01))counter++;
+    if((robot_point_.z > target_angle - 0.02) && (robot_point_.z < target_angle + 0.02))counter++;
     else counter = 0;
-    if(counter>100)break;
+    if(counter>20)break;
     std::cout << counter << " " << robot_point_.z - target_angle << std::endl;
 
 		get_robot_pose();
@@ -76,8 +75,8 @@ bool PanelAction::rotate(double angle)
 		geometry_msgs::Twist vel;
     double diff = target_angle - robot_point_.z;
     vel.angular.z = diff;
-    if (diff < -0.2)diff = -0.2;
-    if (diff > 0.2)diff = 0.2;
+    if(vel.angular.z > 0.2)vel.angular.z = 0.2;
+    if(vel.angular.z < -0.2)vel.angular.z = -0.2;
 		velocity_pub_.publish(vel);
 		std::cout << " ang vel :" << vel.angular.z << std::endl;	
 		loop_rate.sleep();
@@ -86,6 +85,51 @@ bool PanelAction::rotate(double angle)
 	
 }
 
+bool PanelAction::straight(double d)
+{
+	get_robot_pose();
+
+	double start_pos_x = robot_point_.x;
+	double start_pos_y = robot_point_.y;
+	double start_angle = robot_point_.z;
+
+	ros::Rate loop_rate(freq_);
+
+  int counter = 0;
+
+	while(1){
+		geometry_msgs::Twist vel;
+
+    get_robot_pose();
+
+    double now_angle = robot_point_.z;
+    double ang_diff = start_angle - now_angle;
+    double straight_diff = d - std::sqrt(std::pow(robot_point_.x - start_pos_x, 2.0) + std::pow(robot_point_.y - start_pos_y, 2.0)) ;
+
+    std::cout << "ang diff:" << ang_diff;
+    std::cout << " straight diff:" << straight_diff;
+
+		vel.angular.z = ang_diff;
+    if (vel.angular.z > 0.1)vel.angular.z = 0.1;
+    if (vel.angular.z < -0.1)vel.angular.z = -0.1;
+
+		vel.linear.x = straight_diff;
+    if (vel.linear.x > 0.1)vel.linear.x = 0.1;
+    if (vel.linear.x < -0.1)vel.linear.x = -0.1;
+
+    if(std::fabs(ang_diff) < 0.01 && std::fabs(straight_diff) < 0.005)counter++;
+    else counter = 0;
+
+    if(counter>40)break;
+
+		std::cout << " count:" << counter << " straight:" << vel.linear.x << std::endl;
+
+		velocity_pub_.publish(vel);
+		loop_rate.sleep();
+		ros::spinOnce();
+	}
+}
+	
 bool PanelAction::darknet_wait(long wait_time){
 	darknet_lock_ = 1;
 	long begin = ros::Time::now().sec;
@@ -107,13 +151,51 @@ bool PanelAction::darknet_wait(long wait_time){
 }
 
 bool PanelAction::go_panel(double stop_distance){
+
+	get_robot_pose();
+	double start_angle = robot_point_.z;
+
 	ros::Rate loop_rate(freq_);
+
+  int counter = 0;
+	while(scan_lock_)
+  {
+    std::cout << "no scan topic" << std::endl;
+		loop_rate.sleep();
+		ros::spinOnce();
+  }
+  
+  static double pre_scan = 1000;
+  while(1)
+  {
+    std::cout << "wait scan data stationary" << std::endl;
+    std::cout << fabs(min_scan_ - pre_scan) << std::endl;
+    if(fabs(min_scan_ - pre_scan) < 0.01)break;
+    pre_scan = min_scan_;
+		loop_rate.sleep();
+		ros::spinOnce();
+
+  }
+
 	while(1){
-		if (min_scan_ < stop_distance)break;
 		geometry_msgs::Twist vel;
-		vel.linear.x = 0.1;
+
+    get_robot_pose();
+    double now_angle = robot_point_.z;
+    double ang_diff = now_angle - start_angle;
+    std::cout << "ang diff:" << now_angle - start_angle;
+		vel.angular.z = -ang_diff*3;
+    if (vel.angular.z > 0.3)vel.angular.z = 0.3;
+    if (vel.angular.z < -0.3)vel.angular.z = -0.3;
+
+    if((min_scan_ > stop_distance - 0.01) && (min_scan_ < stop_distance + 0.01))counter++;
+    else counter = 0;
+    if(counter>40)break;
+		vel.linear.x = min_scan_ - stop_distance;
+    if (vel.linear.x > 0.3)vel.linear.x = 0.3;
+    if (vel.linear.x < -0.3)vel.linear.x = -0.3;
+		std::cout <<" min_scan:" << min_scan_ << " count:" << counter << " straight:" << vel.linear.x << std::endl;
 		velocity_pub_.publish(vel);
-		std::cout << "straight" << std::endl;
 		loop_rate.sleep();
 		ros::spinOnce();
 	}

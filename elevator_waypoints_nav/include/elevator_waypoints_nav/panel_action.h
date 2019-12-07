@@ -20,6 +20,7 @@ public:
 	PanelAction();
 	void run(bool inverse);
 	bool rotate(double angle);
+	bool straight(double d);
 	bool go_panel(double stop_distance);
 	bool back_home();
 
@@ -40,7 +41,9 @@ private:
 
 	bool darknet_wait(long wait_time);
 	bool darknet_lock_;
+	bool scan_lock_;
 	int darknet_data_;
+
 	double min_scan_;
 
 	bool get_robot_pose();
