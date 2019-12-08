@@ -262,6 +262,7 @@ bool PanelAction::get_ar_marker_pose(double &height){
 
 
 int PanelAction::get_bounding_box_state(){
+  ros::spinOnce();
   return bounding_box_state_;
 }
 
@@ -286,7 +287,7 @@ bool PanelAction::rotate_for_bounding_box(){
   int break_state=0;
   ros::Rate r(10);
   ros::Time unchange_bounding_box_timer;
-  int unchange_timer;
+  long unchange_timer;
   geometry_msgs::Twist vel;
   while(1){
     int bounding_box_x_error = bounding_box_x_ - bounding_box_target_x;
@@ -294,7 +295,6 @@ bool PanelAction::rotate_for_bounding_box(){
       unchange_bounding_box_timer = ros::Time::now();
     }
     unchange_timer = ros::Time::now().toSec() - unchange_bounding_box_timer.toSec();
-    //std::cout << ros::Time::now().toSec() << " ";
     std::cout <<"lock:" << bounding_box_lock_ << "unchange time:" << unchange_timer << std::endl;
     if ((bounding_box_lock_== 0) || unchange_timer > 10)
     {
@@ -311,8 +311,9 @@ bool PanelAction::rotate_for_bounding_box(){
         vel.angular.z = -max_ang_vel;
       }
       bounding_box_lock_ = bounding_box_wait_count;
-      p_bounding_box_lock = bounding_box_lock_;
     }
+
+    p_bounding_box_lock = bounding_box_lock_;
 
     if (vel.angular.z > 0)orientation++;
     else if(vel.angular.z < 0)orientation--;
