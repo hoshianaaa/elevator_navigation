@@ -72,6 +72,6 @@ int main(int argc, char** argv){
     r.sleep();
   }
 	pa.go_panel(0.45);
-  pa.straight(0.01);
+  //pa.straight(0.01);
 	return (0);
 }

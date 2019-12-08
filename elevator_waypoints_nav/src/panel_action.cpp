@@ -87,6 +87,12 @@ bool PanelAction::rotate(double angle)
 
 bool PanelAction::straight(double d)
 {
+  int back = 0;
+  if (d < 0){
+    back = 1;
+    d = -d;
+  }
+ 
 	get_robot_pose();
 
 	double start_pos_x = robot_point_.x;
@@ -114,6 +120,7 @@ bool PanelAction::straight(double d)
     if (vel.angular.z < -0.1)vel.angular.z = -0.1;
 
 		vel.linear.x = straight_diff;
+    if (back)vel.linear.x = - straight_diff;
     if (vel.linear.x > 0.1)vel.linear.x = 0.1;
     if (vel.linear.x < -0.1)vel.linear.x = -0.1;
 
@@ -129,7 +136,7 @@ bool PanelAction::straight(double d)
 		ros::spinOnce();
 	}
 }
-	
+
 bool PanelAction::darknet_wait(long wait_time){
 	darknet_lock_ = 1;
 	long begin = ros::Time::now().sec;

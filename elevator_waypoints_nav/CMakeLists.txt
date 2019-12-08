@@ -51,6 +51,13 @@ target_link_libraries(panel_action_node
 	panel_action
 )
 
+add_executable(push_bottun src/push_bottun.cpp)
+target_link_libraries(push_bottun
+	${catkin_LIBRARIES}
+	panel_action
+)
+
+
 add_executable(waypoints_nav src/waypoints_nav.cpp)
 target_link_libraries(waypoints_nav
 	${catkin_LIBRARIES}
