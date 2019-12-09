@@ -9,6 +9,10 @@ int main(int argc, char** argv){
   elevator_navigation_srv::ArmMotion srv;
 
 	PanelAction pa;
+  pa.rotate_for_target_angle(M_PI/2);
+  pa.rotate_for_target_angle(0);
+  pa.rotate_for_target_angle(-M_PI*3/4);
+  /*
   pa.rotate_for_bounding_box();
   pa.go_panel(0.45);
 
@@ -23,5 +27,6 @@ int main(int argc, char** argv){
     std::cout << "bottun state:" << pa.get_bounding_box_state() << std::endl;
     if (pa.get_bounding_box_state() == 1)loop = 0;
   }
+  */
 	return (0);
 }

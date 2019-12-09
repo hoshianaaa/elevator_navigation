@@ -27,37 +27,51 @@ void PanelAction::scanCallback(const sensor_msgs::LaserScan::ConstPtr& msg){
   min_scan_ = min_scan_ * 0.7 + msg->ranges[msg->ranges.size()/2] * 0.3;
 }
 
+bool PanelAction::rotate_for_target_angle(double target_angle)
+{
+	ros::Rate loop_rate(freq_);
+  const double limit_ang_vel = 0.3;
+  const double error_th = M_PI/180*0.5;
+  int counter = 0;
+  geometry_msgs::Twist vel;
+
+  fix_angle(target_angle);
+
+	while(1){
+
+    get_robot_pose();
+
+    if((robot_point_.z > target_angle - error_th) && (robot_point_.z < target_angle + error_th))counter++;
+    else counter = 0;
+    if(counter>20)break;
+
+    double diff = target_angle - robot_point_.z;
+    fix_angle(diff);
+
+    vel.angular.z = diff;
+    if(vel.angular.z > limit_ang_vel)vel.angular.z = limit_ang_vel;
+    if(vel.angular.z < -limit_ang_vel)vel.angular.z = -limit_ang_vel;
+		velocity_pub_.publish(vel);
+
+		std::cout << "target:" << target_angle/M_PI*180 << " now:" << robot_point_.z/M_PI*180 << " ang_vel:" << vel.angular.z << std::endl;	
+		loop_rate.sleep();
+		ros::spinOnce();
+  }
+}
+
 bool PanelAction::rotate(double angle)
 {
 	ros::Rate loop_rate(freq_);
 	get_robot_pose();
 	double start_angle = robot_point_.z;
 	double target_angle = start_angle + angle; 
+  
+  rotate_for_target_angle(target_angle);
+}
 
-	if (target_angle > M_PI)target_angle -= 2*M_PI;
-	else if (target_angle < -M_PI)target_angle += 2*M_PI;
-
-  int counter = 0;
-	while(1){
-    
-    if((robot_point_.z > target_angle - 0.02) && (robot_point_.z < target_angle + 0.02))counter++;
-    else counter = 0;
-    if(counter>20)break;
-    std::cout << counter << " " << robot_point_.z - target_angle << std::endl;
-
-		get_robot_pose();
-		std::cout << "target angle:" << target_angle;
-		std::cout << " now :" << robot_point_.z;	
-		geometry_msgs::Twist vel;
-    double diff = target_angle - robot_point_.z;
-    vel.angular.z = diff;
-    if(vel.angular.z > 0.2)vel.angular.z = 0.2;
-    if(vel.angular.z < -0.2)vel.angular.z = -0.2;
-		velocity_pub_.publish(vel);
-		std::cout << " ang vel :" << vel.angular.z << std::endl;	
-		loop_rate.sleep();
-		ros::spinOnce();
-  }
+bool PanelAction::fix_angle(double& angle){
+  if (angle > M_PI)angle -= 2*M_PI;
+  if (angle < -M_PI)angle += 2*M_PI;
 }
 
 bool PanelAction::straight(double d)
