@@ -34,7 +34,7 @@ class bounding_box_listener():
     p = Point()
     p.x = bounding_box_x
     p.y = bounding_box_y
-    p.z = 0.0
+    p.z = msg.bounding_boxes[0].id
   
     self.bounding_box_pos_pub.publish(p)
 

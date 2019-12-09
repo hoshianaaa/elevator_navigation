@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   pcl_conversions
   pcl_msgs
   pcl_ros
+  elevator_navigation_srv
 )
 
 find_package(PkgConfig)
@@ -52,6 +53,7 @@ target_link_libraries(panel_action_node
 )
 
 add_executable(push_bottun src/push_bottun.cpp)
+add_dependencies(push_bottun ${elevator_navigation_srv_EXPORTED_TARGETS})
 target_link_libraries(push_bottun
 	${catkin_LIBRARIES}
 	panel_action

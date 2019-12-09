@@ -13,5 +13,7 @@
   <node name="controller_spawner_2" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="--shutdown-timeout 0.1 arm_joint_state_controller interaction_arm_controller"/>
   <!-- Robot state publisher -->
   <!--node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" output="screen" /-->
+  <include file="$(find interaction_moveit_config)/launch/move_group.launch"/> 
+  <node name="arm_motion_server" pkg="moveit_tutorials" type="arm_motion_server.py" output="screen" />
 
 </launch>

@@ -2,6 +2,7 @@
 
 <launch>
   <include file="$(find elevator_recognition)/launch/darknet_ros.launch"/>
+  <include file="$(find elevator_recognition)/launch/ar_track.launch"/>
   <include file="$(find freenect_launch)/launch/freenect.launch"/>
   <node pkg="elevator_recognition" type="bounding_box_listener.py" name="bounding_box_listener" output="screen" />
 </launch>

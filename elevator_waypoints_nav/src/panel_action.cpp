@@ -74,6 +74,66 @@ bool PanelAction::fix_angle(double& angle){
   if (angle < -M_PI)angle += 2*M_PI;
 }
 
+bool PanelAction::line_tracking_stop_point(double x, double y, double angle){
+
+  const double vel_max = 0.3;
+  const double ang_vel_max = 0.6;
+  const double dis_bias = 0.5;
+  const double ang_bias = 0.5;
+  double line_v[2] = {std::cos(angle), std::sin(angle)};
+  double len_line_v = calc_distance(line_v[0], line_v[1]);
+	ros::Rate loop_rate(freq_);
+  geometry_msgs::Twist vel;
+
+	while(1){
+
+    get_robot_pose();
+    double robot_v[2] = {robot_point_.x-x, robot_point_.y-y};
+    std::cout << "rx:" << robot_v[0] << " ry:" << robot_v[1] << std::endl;
+    double inner_pro = calc_inner_product(line_v[0], line_v[1], robot_v[0], robot_v[1]);
+    double len_contact_point_v = inner_pro / len_line_v;
+
+    double contact_point_v[2] = {len_contact_point_v/len_line_v*std::cos(angle), len_contact_point_v/len_line_v*std::sin(angle)};
+    std::cout << "cx:" << contact_point_v[0] << " cy:" << contact_point_v[1] << std::endl;
+
+    double perpendicular_line_v[2] = {robot_v[0] - contact_point_v[0], robot_v[1] - contact_point_v[1]};
+    double diff = calc_distance(perpendicular_line_v[0], perpendicular_line_v[1]);
+    double outer_product_z = line_v[0]*perpendicular_line_v[1] - perpendicular_line_v[0]*line_v[1];
+
+    if (outer_product_z < 0)diff = -diff;
+    std::cout << "diff:" << diff << std::endl;
+
+    double ang_diff = angle - robot_point_.z;
+    fix_angle(ang_diff);
+
+    vel.angular.z = ang_bias*ang_diff - dis_bias*diff;
+    if(vel.angular.z > ang_vel_max)vel.angular.z = ang_vel_max;
+    if(vel.angular.z < -ang_vel_max)vel.angular.z = -ang_vel_max;
+
+    double len_robot_v = calc_distance(robot_v[0], robot_v[1]);
+
+    double goal_dis = len_robot_v;
+    vel.linear.x = goal_dis * (1 - std::fabs(vel.angular.z)/ang_vel_max);
+    if(vel.linear.x > vel_max)vel.linear.x = vel_max;
+    if(vel.linear.x < -vel_max)vel.linear.x = -vel_max;
+
+		velocity_pub_.publish(vel);
+
+		std::cout << "diff:" << diff << " ang_diff:" << ang_diff << " goal_dis:" << goal_dis << std::endl;
+		std::cout << "vel:" << vel.linear.x << " ang_vel:" << vel.angular.z << std::endl;
+		loop_rate.sleep();
+		ros::spinOnce();
+  }
+}
+
+double PanelAction::calc_distance(double x, double y){
+  return std::sqrt(std::fabs(x) + std::fabs(y));
+}
+
+double PanelAction::calc_inner_product(double x1, double y1, double x2, double y2){
+  return x1*x2 + y1*y2;
+}
+
 bool PanelAction::straight(double d)
 {
   int back = 0;

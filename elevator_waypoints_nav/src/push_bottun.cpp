@@ -9,9 +9,7 @@ int main(int argc, char** argv){
   elevator_navigation_srv::ArmMotion srv;
 
 	PanelAction pa;
-  pa.rotate_for_target_angle(M_PI/2);
-  pa.rotate_for_target_angle(0);
-  pa.rotate_for_target_angle(-M_PI*3/4);
+  pa.line_tracking_stop_point(-2.0, 0.0, M_PI);
   /*
   pa.rotate_for_bounding_box();
   pa.go_panel(0.45);
