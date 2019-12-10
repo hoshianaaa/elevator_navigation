@@ -14,6 +14,8 @@
 #include <dirent.h>
 #include <sstream>
 
+#include <ros/package.h>
+
 #ifdef NEW_YAMLCPP
 template<typename T>
 void operator >> (const YAML::Node& node, T& i)
@@ -257,7 +259,9 @@ class EleMapServer
 
 int main(int argc, char** argv){
 	ros::init(argc, argv, "ele_map_server");
-	EleMapServer es("/home/icart/catkin_ws/src/elevator_navigation/ele_map_server/elevator_map/", 3);
+  std::string path = ros::package::getPath("ele_map_server");
+  std::string map_path = path + "/elevator_map/";
+	EleMapServer es(map_path, 3);
 	ros::Rate r(10);
 	while(ros::ok()){
 		ros::spinOnce();
