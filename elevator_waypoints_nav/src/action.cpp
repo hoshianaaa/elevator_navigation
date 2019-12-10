@@ -11,6 +11,7 @@ Action::Action(geometry_msgs::Point sp, geometry_msgs::Point fp, bool rotate)
 	if(!calc_goal_angle(sp,fp,rotate,goal_angle_)){
 		ROS_ERROR("cannot calc goal_angle");
 	}
+  std::cout << "goal angle:" << goal_angle_ << std::endl;
 
 	robot_frame_ = "base_link";
 	global_frame_ = "map";
@@ -89,19 +90,18 @@ bool Action::rotate(double speed, double goal_angle_th){
 	ang_diff = 10000;
 	get_robot_pose();
 
-	double a[2], b[2];
-	a[0] = std::cos(goal_angle_);
-	a[1] = std::sin(goal_angle_);
-
-	b[0] = std::cos(robot_point_.z);
-	b[1] = std::sin(robot_point_.z);
-
-	calc_vectors_interior_angle(a[0], a[1], b[0], b[1], ang_diff);
-
 	while(std::abs(ang_diff) > goal_angle_th){
 		ros::spinOnce();
 		get_robot_pose();
 		ang_diff = robot_point_.z - goal_angle_;
+    double a[2], b[2];
+    a[0] = std::cos(goal_angle_);
+    a[1] = std::sin(goal_angle_);
+
+    b[0] = std::cos(robot_point_.z);
+    b[1] = std::sin(robot_point_.z);
+    calc_vectors_interior_angle(a[0], a[1], b[0], b[1], ang_diff);
+    std::cout << "robot angle:" << robot_point_.z << std::endl;
 		if (ang_diff > 0)ang_speed = -speed;
 		else ang_speed = speed;
 		publish_vel(0, ang_speed);
