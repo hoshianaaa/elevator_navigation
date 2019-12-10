@@ -102,6 +102,8 @@ bool Action::rotate(double speed, double goal_angle_th){
     b[1] = std::sin(robot_point_.z);
     calc_vectors_interior_angle(a[0], a[1], b[0], b[1], ang_diff);
     std::cout << "robot angle:" << robot_point_.z << std::endl;
+    std::cout << "goal angle:" << goal_angle_ << std::endl;
+    std::cout << "diff angle:" << ang_diff << std::endl;
 		if (ang_diff > 0)ang_speed = -speed;
 		else ang_speed = speed;
 		publish_vel(0, ang_speed);

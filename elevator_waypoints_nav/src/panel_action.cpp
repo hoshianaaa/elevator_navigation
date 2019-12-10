@@ -256,8 +256,8 @@ bool PanelAction::back_home(){
 
 bool PanelAction::up_arm(double height, double error_th){
   double now_height;
-  int now_number = 1;
-  const int max_number = 7;
+  int now_number = 4;
+  const int max_number = 10;
   const int min_number = 1;
   elevator_navigation_srv::ArmMotion srv;
   srv.request.number = now_number;
@@ -350,8 +350,7 @@ void PanelAction::boundingBoxCallback(const geometry_msgs::Point::ConstPtr& msg)
 }
 
 
-bool PanelAction::rotate_for_bounding_box(){
-  const int bounding_box_target_x = 340;
+bool PanelAction::rotate_for_bounding_box(const int bounding_box_target_x){
   const int error_th = 5;
   const double max_ang_vel = 0.2;
   const int bounding_box_wait_count = 4;

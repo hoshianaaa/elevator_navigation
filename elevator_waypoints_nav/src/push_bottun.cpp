@@ -9,22 +9,21 @@ int main(int argc, char** argv){
   elevator_navigation_srv::ArmMotion srv;
 
 	PanelAction pa;
-  pa.line_tracking_stop_point(-2.0, 0.0, M_PI);
-  /*
-  pa.rotate_for_bounding_box();
+  //pa.line_tracking_stop_point(-2.0, 0.0, M_PI);
+
+  pa.rotate_for_bounding_box(340);
   pa.go_panel(0.45);
 
   int loop = 1;
   while(loop){
-    pa.rotate_for_bounding_box();
+    pa.rotate_for_bounding_box(330);
     pa.go_panel(0.45);
-    pa.up_arm(1.275, 0.005);
-    pa.straight(0.04);
-    pa.straight(-0.04);
+    pa.up_arm(1.31, 0.005);
+    pa.straight(0.08);
+    pa.straight(-0.08);
     pa.home_arm();
     std::cout << "bottun state:" << pa.get_bounding_box_state() << std::endl;
     if (pa.get_bounding_box_state() == 1)loop = 0;
   }
-  */
 	return (0);
 }
