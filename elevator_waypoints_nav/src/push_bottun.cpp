@@ -23,7 +23,7 @@ int main(int argc, char** argv){
     pa.straight(-0.08);
     pa.home_arm();
     std::cout << "bottun state:" << pa.get_bounding_box_state() << std::endl;
-    if (pa.get_bounding_box_state() == 1)loop = 0;
+    if (pa.get_bounding_box_state() == 3)loop = 0;
   }
 	return (0);
 }
