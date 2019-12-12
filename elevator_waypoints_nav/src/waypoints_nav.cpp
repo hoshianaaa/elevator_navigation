@@ -1,5 +1,7 @@
 #include <ros/ros.h>
 #include <elevator_waypoints_nav/waypoints_nav.h>
+#include <ros/package.h>
+#include <elevator_navigation_srv/ElevatorAction.h>
 
 WaypointsNavigation::WaypointsNavigation() :
 	move_base_action_("move_base", true),
@@ -7,15 +9,23 @@ WaypointsNavigation::WaypointsNavigation() :
 	dist_err_(0.8)
 {
 
+
 	while((move_base_action_.waitForServer(ros::Duration(1.0)) == false) && (ros::ok() == true))
 	{
 		ROS_INFO("waiting...");
 	}
 
-	std::string filename;
-	filename = "/home/icart/catkin_ws/src/elevator_navigation/elevator_waypoints_nav/waypoints_cfg/waypoints.yaml";
+	std::string filename, pkg_path;
+
+  pkg_path = ros::package::getPath("elevator_waypoints_nav");
+	filename = pkg_path + "/waypoints_cfg/waypoints.yaml";
+
+
+	ros::NodeHandle nh;
+  elevator_action_client_ = nh.serviceClient<elevator_navigation_srv::ElevatorAction>("elevator_action");
 
 	ros::NodeHandle private_nh("~");
+
 	private_nh.param("filename", filename, filename);
 	ROS_INFO_STREAM("Read waypoints data from " << filename);
 	if(!readFile(filename)) {
@@ -25,14 +35,14 @@ WaypointsNavigation::WaypointsNavigation() :
 	world_frame_ = "map";
 	robot_frame_ = "base_link";
 
-	elevator_front_pose_.position.x = 0;
+	elevator_front_pose_.position.x = 3;
 	elevator_front_pose_.position.y = 0;
 	elevator_front_pose_.orientation = tf::createQuaternionMsgFromYaw(M_PI);
 
 	start_floor_ = 3;
 
 	elevator_point_.x = 0;
-	elevator_point_.y = -3;
+	elevator_point_.y = 0;
 
 	current_waypoint_ = waypoints_.begin();
 	finish_waypoint_ = waypoints_.end() - 1;
@@ -98,15 +108,11 @@ void WaypointsNavigation::sleep(){
 }
 
 void WaypointsNavigation::elevator_action(){
-	Action in_elevator(elevator_front_pose_.position, elevator_point_, true);
-	Action out_elevator( elevator_point_, elevator_front_pose_.position, false);
-
-	std::cout << "in elevator" << std::endl;
-	in_elevator.move();
-
-	std::cout << "out elevator" << std::endl;
-	out_elevator.move();
-}
+  elevator_navigation_srv::ElevatorAction srv;
+  srv.request.up = 1;
+  srv.request.number = 3;
+  elevator_action_client_.call(srv);
+	}
 
 bool WaypointsNavigation::readFile(const std::string &filename){
 	waypoints_.clear();

@@ -1,19 +1,14 @@
 waypoints:
     - point:
-        x: -4.0
-        y: 0
-        z: 0
-        floor: 3
-    - point:
-        x: -4.0
-        y: -2.0
-        z: 0
-        floor: 1
-    - point:
-        x: -4.0
+        x: 5.5
         y: -4.0
         z: 0
         floor: 3
+    - point:
+        x: 6.0
+        y: 0.0
+        z: 0
+        floor: 1
 finish_pose:
     header:
         seq: 0

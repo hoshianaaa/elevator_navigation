@@ -21,11 +21,12 @@ public:
 	PanelAction();
 	bool rotate_for_target_angle(double target_angle);
 	bool rotate(double angle);
+	bool rotate_home();
 	bool straight(double d);
   bool line_tracking_stop_point(double x, double y, double angle);
 	bool go_panel(double stop_distance);
-	bool back_home();
-  bool rotate_for_bounding_box();
+	bool back(double distance);
+  bool rotate_for_bounding_box(const int bounding_box_target_x);
   bool up_arm(double height, double error_th);
   bool home_arm();
   int get_bounding_box_state();

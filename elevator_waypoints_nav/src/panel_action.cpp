@@ -59,6 +59,13 @@ bool PanelAction::rotate_for_target_angle(double target_angle)
   }
 }
 
+bool PanelAction::rotate_home()
+{
+  rotate_for_target_angle(home_point_.z);
+}
+
+
+
 bool PanelAction::rotate(double angle)
 {
 	ros::Rate loop_rate(freq_);
@@ -236,22 +243,34 @@ bool PanelAction::go_panel(double stop_distance){
 	}
 }
 
-bool PanelAction::back_home(){
+bool PanelAction::back(double distance){
+  std::cout << "back" << std::endl;
 	ros::Rate loop_rate(freq_);
-	double stop_distance = 0.5;
+	double stop_distance = 0.1;
+  get_robot_pose();
+  
+  double sx = robot_point_.x;
+  double sy = robot_point_.y;
+
+  geometry_msgs::Twist vel;
 	while(1){
-		get_robot_pose();
-		double dx = robot_point_.x - home_point_.x;
-		double dy = robot_point_.y - home_point_.y;
+
+    get_robot_pose();
+
+		double dx = robot_point_.x - sx;
+		double dy = robot_point_.y - sy;
+
 		double now_dis = std::sqrt(dx * dx + dy * dy);
-		if (now_dis < stop_distance)break;
-		geometry_msgs::Twist vel;
+		if (now_dis > distance)break;
 		vel.linear.x = -0.1;
 		velocity_pub_.publish(vel);
-		std::cout << "straight" << std::endl;
 		loop_rate.sleep();
 		ros::spinOnce();
+
 	}
+		vel.linear.x = 0.0;
+		velocity_pub_.publish(vel);
+	
 }
 
 bool PanelAction::up_arm(double height, double error_th){

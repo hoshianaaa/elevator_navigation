@@ -15,6 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
   pcl_msgs
   pcl_ros
   elevator_navigation_srv
+  roslib
 )
 
 find_package(PkgConfig)
@@ -50,6 +51,7 @@ add_executable(panel_action_node src/panel_action_node.cpp)
 target_link_libraries(panel_action_node
 	${catkin_LIBRARIES}
 	panel_action
+	action
 )
 
 add_executable(push_bottun src/push_bottun.cpp)
