@@ -1,7 +1,7 @@
 #include <elevator_waypoints_nav/panel_action.h>
 PanelAction::PanelAction()
 {
-	std::cout << "panel action class" << std::endl;
+	//std::cout << "panel action class" << std::endl;
 	velocity_pub_ = n_.advertise<geometry_msgs::Twist>("icart_mini/cmd_vel", 1);
 	scan_sub_ = n_.subscribe("scan", 1, &PanelAction::scanCallback, this);
 	bounding_box_sub_ = n_.subscribe("bounding_box_pos", 1, &PanelAction::boundingBoxCallback, this);
@@ -25,6 +25,10 @@ PanelAction::PanelAction()
 void PanelAction::scanCallback(const sensor_msgs::LaserScan::ConstPtr& msg){
   scan_lock_ = 0;
   min_scan_ = min_scan_ * 0.7 + msg->ranges[msg->ranges.size()/2] * 0.3;
+  scan_sum_ = 0;
+  for(int i=0;i<msg->ranges.size();i++){
+    scan_sum_ += msg->ranges[i];
+  }
 }
 
 bool PanelAction::rotate_for_target_angle(double target_angle)
@@ -53,7 +57,7 @@ bool PanelAction::rotate_for_target_angle(double target_angle)
     if(vel.angular.z < -limit_ang_vel)vel.angular.z = -limit_ang_vel;
 		velocity_pub_.publish(vel);
 
-		std::cout << "target:" << target_angle/M_PI*180 << " now:" << robot_point_.z/M_PI*180 << " ang_vel:" << vel.angular.z << std::endl;	
+		//std::cout << "target:" << target_angle/M_PI*180 << " now:" << robot_point_.z/M_PI*180 << " ang_vel:" << vel.angular.z << std::endl;	
 		loop_rate.sleep();
 		ros::spinOnce();
   }
@@ -96,19 +100,19 @@ bool PanelAction::line_tracking_stop_point(double x, double y, double angle){
 
     get_robot_pose();
     double robot_v[2] = {robot_point_.x-x, robot_point_.y-y};
-    std::cout << "rx:" << robot_v[0] << " ry:" << robot_v[1] << std::endl;
+    //std::cout << "rx:" << robot_v[0] << " ry:" << robot_v[1] << std::endl;
     double inner_pro = calc_inner_product(line_v[0], line_v[1], robot_v[0], robot_v[1]);
     double len_contact_point_v = inner_pro / len_line_v;
 
     double contact_point_v[2] = {len_contact_point_v/len_line_v*std::cos(angle), len_contact_point_v/len_line_v*std::sin(angle)};
-    std::cout << "cx:" << contact_point_v[0] << " cy:" << contact_point_v[1] << std::endl;
+    //std::cout << "cx:" << contact_point_v[0] << " cy:" << contact_point_v[1] << std::endl;
 
     double perpendicular_line_v[2] = {robot_v[0] - contact_point_v[0], robot_v[1] - contact_point_v[1]};
     double diff = calc_distance(perpendicular_line_v[0], perpendicular_line_v[1]);
     double outer_product_z = line_v[0]*perpendicular_line_v[1] - perpendicular_line_v[0]*line_v[1];
 
     if (outer_product_z < 0)diff = -diff;
-    std::cout << "diff:" << diff << std::endl;
+    //std::cout << "diff:" << diff << std::endl;
 
     double ang_diff = angle - robot_point_.z;
     fix_angle(ang_diff);
@@ -126,8 +130,8 @@ bool PanelAction::line_tracking_stop_point(double x, double y, double angle){
 
 		velocity_pub_.publish(vel);
 
-		std::cout << "diff:" << diff << " ang_diff:" << ang_diff << " goal_dis:" << goal_dis << std::endl;
-		std::cout << "vel:" << vel.linear.x << " ang_vel:" << vel.angular.z << std::endl;
+		//std::cout << "diff:" << diff << " ang_diff:" << ang_diff << " goal_dis:" << goal_dis << std::endl;
+		//std::cout << "vel:" << vel.linear.x << " ang_vel:" << vel.angular.z << std::endl;
 		loop_rate.sleep();
 		ros::spinOnce();
   }
@@ -168,8 +172,8 @@ bool PanelAction::straight(double d)
     double ang_diff = start_angle - now_angle;
     double straight_diff = d - std::sqrt(std::pow(robot_point_.x - start_pos_x, 2.0) + std::pow(robot_point_.y - start_pos_y, 2.0)) ;
 
-    std::cout << "ang diff:" << ang_diff;
-    std::cout << " straight diff:" << straight_diff;
+    //std::cout << "ang diff:" << ang_diff;
+    //std::cout << " straight diff:" << straight_diff;
 
 		vel.angular.z = ang_diff;
     if (vel.angular.z > 0.1)vel.angular.z = 0.1;
@@ -185,7 +189,7 @@ bool PanelAction::straight(double d)
 
     if(counter>40)break;
 
-		std::cout << " count:" << counter << " straight:" << vel.linear.x << std::endl;
+		//std::cout << " count:" << counter << " straight:" << vel.linear.x << std::endl;
 
 		velocity_pub_.publish(vel);
 		loop_rate.sleep();
@@ -203,7 +207,7 @@ bool PanelAction::go_panel(double stop_distance){
   int counter = 0;
 	while(scan_lock_)
   {
-    std::cout << "no scan topic" << std::endl;
+    //std::cout << "no scan topic" << std::endl;
 		loop_rate.sleep();
 		ros::spinOnce();
   }
@@ -211,8 +215,8 @@ bool PanelAction::go_panel(double stop_distance){
   static double pre_scan = 1000;
   while(1)
   {
-    std::cout << "wait scan data stationary" << std::endl;
-    std::cout << fabs(min_scan_ - pre_scan) << std::endl;
+    //std::cout << "wait scan data stationary" << std::endl;
+    //std::cout << fabs(min_scan_ - pre_scan) << std::endl;
     if(fabs(min_scan_ - pre_scan) < 0.01)break;
     pre_scan = min_scan_;
 		loop_rate.sleep();
@@ -225,7 +229,7 @@ bool PanelAction::go_panel(double stop_distance){
     get_robot_pose();
     double now_angle = robot_point_.z;
     double ang_diff = now_angle - start_angle;
-    std::cout << "ang diff:" << now_angle - start_angle;
+    //std::cout << "ang diff:" << now_angle - start_angle;
 		vel.angular.z = -ang_diff*3;
     if (vel.angular.z > 0.3)vel.angular.z = 0.3;
     if (vel.angular.z < -0.3)vel.angular.z = -0.3;
@@ -236,15 +240,15 @@ bool PanelAction::go_panel(double stop_distance){
 		vel.linear.x = min_scan_ - stop_distance;
     if (vel.linear.x > 0.3)vel.linear.x = 0.3;
     if (vel.linear.x < -0.3)vel.linear.x = -0.3;
-		std::cout <<" min_scan:" << min_scan_ << " count:" << counter << " straight:" << vel.linear.x << std::endl;
+		//std::cout <<" min_scan:" << min_scan_ << " count:" << counter << " straight:" << vel.linear.x << std::endl;
 		velocity_pub_.publish(vel);
 		loop_rate.sleep();
 		ros::spinOnce();
 	}
 }
 
-bool PanelAction::back(double distance){
-  std::cout << "back" << std::endl;
+bool PanelAction::back(double distance, double speed){
+  //std::cout << "back" << std::endl;
 	ros::Rate loop_rate(freq_);
 	double stop_distance = 0.1;
   get_robot_pose();
@@ -262,7 +266,7 @@ bool PanelAction::back(double distance){
 
 		double now_dis = std::sqrt(dx * dx + dy * dy);
 		if (now_dis > distance)break;
-		vel.linear.x = -0.1;
+		vel.linear.x = -speed;
 		velocity_pub_.publish(vel);
 		loop_rate.sleep();
 		ros::spinOnce();
@@ -361,7 +365,7 @@ int PanelAction::get_bounding_box_state(){
 
 void PanelAction::boundingBoxCallback(const geometry_msgs::Point::ConstPtr& msg)
 {
-  std::cout << "bounding box call back" << " state:" << msg->z << std::endl;
+  //std::cout << "bounding box call back" << " state:" << msg->z << std::endl;
   bounding_box_x_ = msg -> x; 
   if(bounding_box_lock_)bounding_box_lock_--;
   
@@ -387,7 +391,7 @@ bool PanelAction::rotate_for_bounding_box(const int bounding_box_target_x){
       unchange_bounding_box_timer = ros::Time::now();
     }
     unchange_timer = ros::Time::now().toSec() - unchange_bounding_box_timer.toSec();
-    std::cout <<"lock:" << bounding_box_lock_ << "unchange time:" << unchange_timer << std::endl;
+    //std::cout <<"lock:" << bounding_box_lock_ << "unchange time:" << unchange_timer << std::endl;
     if ((bounding_box_lock_== 0) || unchange_timer > 10)
     {
       unchange_bounding_box_timer = ros::Time::now();
@@ -413,10 +417,14 @@ bool PanelAction::rotate_for_bounding_box(const int bounding_box_target_x){
     if (orientation>publish_vel_count){vel.angular.z=0;orientation=0;}
     else if (orientation< -publish_vel_count){vel.angular.z=0;orientation=0;}
     if(break_state)break;
-    std::cout << "vel:" << vel.angular.z << "ori:" << orientation << "error:" << bounding_box_x_error << std::endl;
+    //std::cout << "vel:" << vel.angular.z << "ori:" << orientation << "error:" << bounding_box_x_error << std::endl;
     velocity_pub_.publish(vel);
     r.sleep();
     ros::spinOnce();
   }
+}
+
+double PanelAction::get_scan_sum(){
+  return scan_sum_;
 }
 

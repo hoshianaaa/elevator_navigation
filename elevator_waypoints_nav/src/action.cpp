@@ -1,6 +1,6 @@
 #include <elevator_waypoints_nav/action.h>
 
-Action::Action(geometry_msgs::Point sp, geometry_msgs::Point fp, bool rotate)
+Action::Action(geometry_msgs::Point sp, geometry_msgs::Point fp, bool rotate, bool do_stop_robot)
 {
 	velocity_pub_ = n_.advertise<geometry_msgs::Twist>("icart_mini/cmd_vel", 1);
 	scan_sub_ = n_.subscribe("scan", 1, &Action::scanCallback,this); 
@@ -21,6 +21,8 @@ Action::Action(geometry_msgs::Point sp, geometry_msgs::Point fp, bool rotate)
 
 	freq_ = 10;
 	sensor_range_ = M_PI / 180 * 5;
+  
+  do_stop_robot_ = do_stop_robot;
 }
 
 bool Action::get_robot_pose(){
