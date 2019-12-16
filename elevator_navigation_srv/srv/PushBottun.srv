@@ -1,0 +1,7 @@
+int32 bounding_box_x
+int32 bounding_box_stop_number
+float32 height
+float32 stop_distance
+float32 go_distance
+---
+bool status

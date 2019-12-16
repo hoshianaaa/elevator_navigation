@@ -2,6 +2,7 @@
 
 <launch>
 	<include file="$(find elevator_recognition)/launch/elevator_recognition.launch" />
+	<include file="$(find elevator_navigation_executor)/launch/nav_elevator_map.launch" />
 	<node name="elevator_action_server" pkg="elevator_waypoints_nav" type="panel_action_node" output="screen" />
 	<node name="push_bottun_server" pkg="elevator_waypoints_nav" type="push_bottun" output="screen" />
 	<!--node name="elevator_wp_nav" pkg="elevator_waypoints_nav" type="waypoints_nav" output="screen" /-->

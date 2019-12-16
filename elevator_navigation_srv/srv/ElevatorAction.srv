@@ -1,0 +1,4 @@
+bool up
+int32 number
+---
+bool status

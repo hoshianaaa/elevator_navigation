@@ -25,11 +25,12 @@ public:
 	bool straight(double d);
   bool line_tracking_stop_point(double x, double y, double angle);
 	bool go_panel(double stop_distance);
-	bool back(double distance);
+	bool back(double distance, double speed=0.1);
   bool rotate_for_bounding_box(const int bounding_box_target_x);
   bool up_arm(double height, double error_th);
   bool home_arm();
   int get_bounding_box_state();
+  double get_scan_sum();
 
 private:
 	void scanCallback(const sensor_msgs::LaserScan::ConstPtr& msg);
@@ -58,4 +59,6 @@ private:
   int bounding_box_x_;
   int bounding_box_lock_;
   int bounding_box_state_;
+
+  double scan_sum_;
 };

@@ -23,14 +23,14 @@ bool elevator_action(elevator_navigation_srv::ElevatorAction::Request &req, elev
   
   int bounding_box_x = 340;
   int bounding_box_stop_number = 1;
-  double height = 1.275;
+  //double height = 1.275;
+  double height = 1.2;
   double stop_distance = 0.45;
   double go_distance = 0.05;
 
   double first_scan_sum, scan_sum;
   first_scan_sum = pa.get_scan_sum();
   std::cout << std::endl << std::endl <<  "first scan sum!!!!!!!:" << first_scan_sum << std::endl;
-
 
   int id = 0;
   while(1){

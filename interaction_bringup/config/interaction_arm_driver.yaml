@@ -42,7 +42,7 @@ joint_3_driver:
 
 joint_4_driver:
   joint_name: arm_joint_4
-  id: 4
+  id: 5
   min_angle: -180
   max_angle:  180
   stretch: 60
@@ -52,7 +52,7 @@ joint_4_driver:
 
 joint_5_driver:
   joint_name: arm_joint_5
-  id: 5
+  id: 4
   min_angle: -180
   max_angle:  180
   stretch: 60

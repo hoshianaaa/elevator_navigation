@@ -9,7 +9,7 @@
 
 class Action{
 public:
-	Action(geometry_msgs::Point sp, geometry_msgs::Point fp, bool rotate = false);
+	Action(geometry_msgs::Point sp, geometry_msgs::Point fp, bool rotate = false, bool do_stop_robot = true);
 
 	bool get_robot_pose();
 	void move();
@@ -52,6 +52,8 @@ private:
 
 	double sensor_range_;
 	double sensor_data_min_;
+
+  bool do_stop_robot_;
 
 };
 
