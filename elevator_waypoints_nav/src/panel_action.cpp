@@ -17,9 +17,7 @@ PanelAction::PanelAction()
 	get_robot_pose();
 	home_point_ = robot_point_;
 
-  bounding_box_x_ = 1000;
   bounding_box_lock_ = 4;
-  bounding_box_state_ = 0;
 }
 
 void PanelAction::scanCallback(const sensor_msgs::LaserScan::ConstPtr& msg){
@@ -360,20 +358,29 @@ bool PanelAction::get_ar_marker_pose(double &height){
 
 int PanelAction::get_bounding_box_state(){
   ros::spinOnce();
-  return bounding_box_state_;
+  return 0;
 }
 
-void PanelAction::boundingBoxCallback(const geometry_msgs::Point::ConstPtr& msg)
+void PanelAction::boundingBoxCallback(const geometry_msgs::PoseArray::ConstPtr& msg)
 {
   //std::cout << "bounding box call back" << " state:" << msg->z << std::endl;
-  bounding_box_x_ = msg -> x; 
+
+  BoundingBox b;
+  boxes_.clear();
+
+  for(int i=0;i<msg->poses.size();i++){
+    b.x = msg ->poses[i].position.x;
+    b.id = msg ->poses[i].position.z;
+    boxes_.push_back(b);
+  }
+
   if(bounding_box_lock_)bounding_box_lock_--;
   
-  bounding_box_state_= msg->z;
 }
 
 
-bool PanelAction::rotate_for_bounding_box(const int bounding_box_target_x){
+//id up:0 up_on:1 e18:2 e18_on:3
+bool PanelAction::rotate_for_bounding_box(const int bounding_box_target_x, const int target_id){
   const int error_th = 5;
   const double max_ang_vel = 0.2;
   const int bounding_box_wait_count = 4;
@@ -385,8 +392,11 @@ bool PanelAction::rotate_for_bounding_box(const int bounding_box_target_x){
   ros::Time unchange_bounding_box_timer;
   long unchange_timer;
   geometry_msgs::Twist vel;
+  static int bounding_box_x_error = 10000;
   while(1){
-    int bounding_box_x_error = bounding_box_x_ - bounding_box_target_x;
+    for(int i=0;i<boxes_.size();i++){
+      if(boxes_[i].id == target_id)bounding_box_x_error = boxes_[i].x - bounding_box_target_x;
+    }
     if (p_bounding_box_lock != bounding_box_lock_){
       unchange_bounding_box_timer = ros::Time::now();
     }

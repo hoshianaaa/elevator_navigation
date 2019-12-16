@@ -101,7 +101,7 @@ bool elevator_action(elevator_navigation_srv::ElevatorAction::Request &req, elev
 	PanelAction pa2;
 	pa2.rotate(-M_PI/6);
 	pa2.go_panel(0.45);
-  pa2.rotate_for_bounding_box(340);
+  pa2.rotate_for_bounding_box(340, 2);
   pa2.go_panel(0.45);
 
   bounding_box_x = 330;
@@ -111,7 +111,7 @@ bool elevator_action(elevator_navigation_srv::ElevatorAction::Request &req, elev
   go_distance = 0.09;
 
   while(1){
-    pa2.rotate_for_bounding_box(bounding_box_x);
+    pa2.rotate_for_bounding_box(bounding_box_x, 2);
     pa2.go_panel(stop_distance);
     pa2.up_arm(height, 0.005);
     pa2.straight(go_distance);
