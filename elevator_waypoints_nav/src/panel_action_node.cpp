@@ -23,8 +23,24 @@ bool elevator_action(elevator_navigation_srv::ElevatorAction::Request &req, elev
   
   int bounding_box_x = 340;
   int bounding_box_stop_number = 1;
-  //double height = 1.275;
-  double height = 1.2;
+
+  //3kai up 1.275 
+  //3kai down 1.22
+  //1kai up 1.30
+  //1kai down 1.25
+  double bottun_height[2][2] = {{1.25, 1.30}, {1.22, 1.275}};
+
+  int floor;
+  bool up;
+
+  if (req.start_floor == 1)floor = 0;
+  if (req.start_floor == 3)floor = 1;
+
+  if (req.target_floor - req.start_floor > 0)up = 1;
+  else up = 0;
+
+  double height = bottun_height[floor][up];
+
   double stop_distance = 0.45;
   double go_distance = 0.05;
 
@@ -44,7 +60,7 @@ bool elevator_action(elevator_navigation_srv::ElevatorAction::Request &req, elev
     scan_sum = pa.get_scan_sum();
     std::cout << "scan sum!!!!!!!!!:" << scan_sum << std::endl;
     if((scan_sum - first_scan_sum) > 60){
-      std::cout << "open the door!!!!!!!!!!"  << std::endl;
+     std::cout << "open the door!!!!!!!!!!"  << std::endl;
       pa.back(0.5, 0.5);
       id = 2;
       break;
@@ -54,8 +70,7 @@ bool elevator_action(elevator_navigation_srv::ElevatorAction::Request &req, elev
 
 
     pa.home_arm();
-    std::cout << "bottun state:" << pa.get_bounding_box_state() << std::endl;
-    if (pa.get_bounding_box_state() == bounding_box_stop_number){
+    if (pa.find_bounding_box(1)){
       id =1;
       break;
     }
@@ -117,8 +132,7 @@ bool elevator_action(elevator_navigation_srv::ElevatorAction::Request &req, elev
     pa2.straight(go_distance);
     pa2.straight(-go_distance);
     pa2.home_arm();
-    std::cout << "bottun state:" << pa2.get_bounding_box_state() << std::endl;
-    if (pa2.get_bounding_box_state() == bounding_box_stop_number)break;
+    if (pa2.find_bounding_box(3))break;
   }
 
   pa2.back(0.50);

@@ -7,12 +7,13 @@ bool push_bottun(elevator_navigation_srv::PushBottun::Request &req, elevator_nav
 {
 	PanelAction pa;
 
-  pa.rotate_for_bounding_box(req.bounding_box_x);
+  //pa.rotate_for_bounding_box(req.bounding_box_x);
   //pa.go_panel(0.45);
-  pa.go_panel(req.stop_distance);
+  //pa.go_panel(req.stop_distance);
 
   int loop = 1;
   while(loop){
+    /*
     //pa.rotate_for_bounding_box(330);
     pa.rotate_for_bounding_box(req.bounding_box_x);
     pa.go_panel(req.stop_distance);
@@ -22,8 +23,8 @@ bool push_bottun(elevator_navigation_srv::PushBottun::Request &req, elevator_nav
     pa.straight(req.go_distance);
     pa.straight(-req.go_distance);
     pa.home_arm();
-    std::cout << "bottun state:" << pa.get_bounding_box_state() << std::endl;
-    if (pa.get_bounding_box_state() == req.bounding_box_stop_number)loop = 0;
+    */
+    if (pa.find_bounding_box(3))std::cout << "find bounding box 3" << std::endl;
   }
   res.status = true;
   return true;

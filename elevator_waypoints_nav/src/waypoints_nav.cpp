@@ -109,8 +109,6 @@ void WaypointsNavigation::sleep(){
 
 void WaypointsNavigation::elevator_action(){
   elevator_navigation_srv::ElevatorAction srv;
-  srv.request.up = 1;
-  srv.request.number = 3;
   elevator_action_client_.call(srv);
 	}
 

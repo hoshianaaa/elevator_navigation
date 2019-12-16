@@ -356,8 +356,11 @@ bool PanelAction::get_ar_marker_pose(double &height){
 }
 
 
-int PanelAction::get_bounding_box_state(){
+bool PanelAction::find_bounding_box(const int id){
   ros::spinOnce();
+  for(int i=0;i<boxes_.size();i++){
+    if (boxes_[i].id == id)return 1;
+  }
   return 0;
 }
 
