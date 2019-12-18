@@ -3,6 +3,8 @@
 
 #include <geometry_msgs/Twist.h>
 #include <geometry_msgs/Point.h>
+#include <geometry_msgs/PoseArray.h>
+#include <geometry_msgs/Pose.h>
 
 #include <std_msgs/Int32.h>
 #include <sensor_msgs/LaserScan.h>
@@ -15,6 +17,13 @@
 #include <pcl_conversions/pcl_conversions.h>
 
 #include <elevator_navigation_srv/ArmMotion.h>
+#include <elevator_navigation_srv/ArmMotionDown.h>
+
+class BoundingBox{
+public:
+  int x;
+  int id;
+};
 
 class PanelAction{
 public:
@@ -26,20 +35,22 @@ public:
   bool line_tracking_stop_point(double x, double y, double angle);
 	bool go_panel(double stop_distance);
 	bool back(double distance, double speed=0.1);
-  bool rotate_for_bounding_box(const int bounding_box_target_x);
-  bool up_arm(double height, double error_th);
+  bool rotate_for_bounding_box(const int bounding_box_target_x, const int target_id = 0);
+  bool up_arm(double height, double error_th, int start_number = 4);
+  bool down_arm(double height, double error_th, int start_number = 2);
   bool home_arm();
-  int get_bounding_box_state();
+  bool home_arm_down();
+  bool find_bounding_box(const int id = 1);
   double get_scan_sum();
 
 private:
 	void scanCallback(const sensor_msgs::LaserScan::ConstPtr& msg);
-	void boundingBoxCallback(const geometry_msgs::Point::ConstPtr& msg);
+	void boundingBoxCallback(const geometry_msgs::PoseArray::ConstPtr& msg);
 	ros::NodeHandle n_;
 	ros::Publisher velocity_pub_;
 	ros::Subscriber scan_sub_;
 	ros::Subscriber bounding_box_sub_;
-	ros::ServiceClient arm_motion_client_;
+	ros::ServiceClient arm_motion_client_, arm_motion_down_client_;
 	
 	tf::TransformListener tf_listener_;
 	std::string robot_frame_, global_frame_, ar_marker_frame_;
@@ -56,9 +67,8 @@ private:
   double calc_inner_product(double x1, double y1, double x2, double y2);
 	double freq_;
 
-  int bounding_box_x_;
+  std::vector<BoundingBox> boxes_;
   int bounding_box_lock_;
-  int bounding_box_state_;
 
   double scan_sum_;
 };

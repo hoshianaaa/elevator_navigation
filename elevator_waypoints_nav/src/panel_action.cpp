@@ -6,6 +6,7 @@ PanelAction::PanelAction()
 	scan_sub_ = n_.subscribe("scan", 1, &PanelAction::scanCallback, this);
 	bounding_box_sub_ = n_.subscribe("bounding_box_pos", 1, &PanelAction::boundingBoxCallback, this);
   arm_motion_client_ = n_.serviceClient<elevator_navigation_srv::ArmMotion>("arm_motion");
+  arm_motion_down_client_ = n_.serviceClient<elevator_navigation_srv::ArmMotionDown>("arm_motion_down");
 	
 	scan_lock_ = 1;
 	robot_frame_  = "base_link";
@@ -275,9 +276,9 @@ bool PanelAction::back(double distance, double speed){
 	
 }
 
-bool PanelAction::up_arm(double height, double error_th){
+bool PanelAction::up_arm(double height, double error_th, int start_number){
   double now_height;
-  int now_number = 4;
+  int now_number = start_number;
   const int max_number = 15;
   const int min_number = 1;
   elevator_navigation_srv::ArmMotion srv;
@@ -312,11 +313,57 @@ bool PanelAction::up_arm(double height, double error_th){
   }
 }
 
+bool PanelAction::down_arm(double height, double error_th, int start_number){
+  double now_height;
+  int now_number = start_number;
+  const int max_number = 5;
+  const int min_number = 1;
+  elevator_navigation_srv::ArmMotionDown srv;
+  srv.request.number = now_number;
+  arm_motion_down_client_.call(srv);
+  int loop = 1;
+  
+  while(loop){
+    if (get_ar_marker_pose(now_height)){
+      std::cout << "now height:" << now_height << " height:" << height << std::endl;
+      if (std::fabs(height - now_height) < error_th){
+        ROS_INFO("finish");
+        loop=0;
+      }
+      else if (height - now_height < 0){
+        if (now_number < max_number)now_number++;
+        srv.request.number = now_number;
+        ROS_INFO("arm motion down (down):%d", now_number);
+        arm_motion_down_client_.call(srv);
+      }
+      else if (height - now_height > 0){
+        if (now_number > min_number)now_number--;
+        srv.request.number = now_number;
+        ROS_INFO("arm motion down (up):%d", now_number);
+        arm_motion_down_client_.call(srv);
+      }
+      
+    }
+    else
+    {
+      ROS_ERROR("cannot get ar_marker pose");
+    }
+  }
+}
+
+
 bool PanelAction::home_arm(){
   elevator_navigation_srv::ArmMotion srv;
   srv.request.number = 0;
   ROS_INFO("arm motion:%d", 0);
   arm_motion_client_.call(srv);
+}
+
+bool PanelAction::home_arm_down(){
+  elevator_navigation_srv::ArmMotionDown srv;
+  srv.request.number = 0;
+  ROS_INFO("arm motion:%d", 0);
+  arm_motion_down_client_.call(srv);
 }
  
 
@@ -395,7 +442,7 @@ bool PanelAction::rotate_for_bounding_box(const int bounding_box_target_x, const
   ros::Time unchange_bounding_box_timer;
   long unchange_timer;
   geometry_msgs::Twist vel;
-  static int bounding_box_x_error = 10000;
+  int bounding_box_x_error = 10000;
   while(1){
     for(int i=0;i<boxes_.size();i++){
       if(boxes_[i].id == target_id)bounding_box_x_error = boxes_[i].x - bounding_box_target_x;
@@ -430,7 +477,7 @@ bool PanelAction::rotate_for_bounding_box(const int bounding_box_target_x, const
     if (orientation>publish_vel_count){vel.angular.z=0;orientation=0;}
     else if (orientation< -publish_vel_count){vel.angular.z=0;orientation=0;}
     if(break_state)break;
-    //std::cout << "vel:" << vel.angular.z << "ori:" << orientation << "error:" << bounding_box_x_error << std::endl;
+    std::cout << "vel:" << vel.angular.z << "ori:" << orientation << "error:" << bounding_box_x_error << std::endl;
     velocity_pub_.publish(vel);
     r.sleep();
     ros::spinOnce();

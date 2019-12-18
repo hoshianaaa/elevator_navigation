@@ -130,11 +130,12 @@ bool elevator_action(elevator_navigation_srv::ElevatorAction::Request &req, elev
   pa2.rotate_for_bounding_box(340, 2);
   pa2.go_panel(0.45);
 
+
   int bounding_box_x2 = 330;
   int bounding_box_stop_number2 = 3;
   double height2 = 1.30;
   double height_1kai = 0.98;
-  double go_distance_1kai = 0.08;
+  double go_distance_1kai = 0.05;
   double stop_distance_1kai = 0.45;
   double stop_distance2 = 0.45;
   double go_distance2 = 0.09;
@@ -147,13 +148,12 @@ bool elevator_action(elevator_navigation_srv::ElevatorAction::Request &req, elev
 
   while(1){
     if (req.target_floor == 1){
-      pa2.home_arm_down();
       pa2.rotate_for_bounding_box(bounding_box_x2, 4);
       pa2.go_panel(stop_distance_1kai);
-      pa2.down_arm(height_1kai, 0.005);
+      pa2.up_arm(height_1kai, 0.005, 16);
       pa2.straight(go_distance_1kai);
       pa2.straight(-go_distance_1kai);
-      pa2.home_arm_down();
+      pa2.home_arm();
       if (pa2.find_bounding_box(5))break;
     }
     else{

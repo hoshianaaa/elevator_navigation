@@ -56,8 +56,10 @@ find_package(catkin REQUIRED COMPONENTS
 add_service_files(
   FILES
   ArmMotion.srv
+  ArmMotionDown.srv
   ElevatorAction.srv
   PushBottun.srv
+  NeckMotion.srv
 )
 
 ## Generate actions in the 'action' folder

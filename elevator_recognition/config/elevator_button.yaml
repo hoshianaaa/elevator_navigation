@@ -3,7 +3,7 @@ yolo_model:
   config_file:
     name: data1204_net.cfg
   weight_file:
-    name: data1211_net_5000.weights
+    name: data1217_net_12000.weights
   threshold:
     value: 0.2
   detection_classes:
@@ -12,3 +12,5 @@ yolo_model:
       - up_on
       - e18
       - e18_on
+      - e1
+      - e1_on
