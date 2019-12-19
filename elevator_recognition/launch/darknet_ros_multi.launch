@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<launch>
+  <!-- Console launch prefix -->
+  <arg name="launch_prefix" default=""/>
+  <arg name="image" default="/image_data" />
+
+  <!-- Config and weights folder. -->
+  <arg name="yolo_weights_path"          default="/home/icart/"/>
+  <arg name="yolo_config_path"           default="$(find elevator_recognition)/yolo_network_config/cfg"/>
+
+  <!-- ROS and network parameter files -->
+  <arg name="ros_param_file"             default="$(find elevator_recognition)/config/ros.yaml"/>
+  <arg name="network_param_file"         default="$(find elevator_recognition)/config/elevator_button.yaml"/>
+
+  <!-- Load parameters -->
+  <rosparam command="load" ns="darknet_ros" file="$(arg ros_param_file)"/>
+  <rosparam command="load" ns="darknet_ros" file="$(arg network_param_file)"/>
+
+  <!-- Start darknet and ros wrapper -->
+  <node pkg="darknet_ros" type="darknet_ros" name="darknet_ros" output="screen" launch-prefix="$(arg launch_prefix)">
+    <param name="weights_path"          value="$(arg yolo_weights_path)" />
+    <param name="config_path"           value="$(arg yolo_config_path)" />
+    <remap from="camera/rgb/image_raw"  to="$(arg image)" />
+  </node>
+
+  <!-- ROS and network parameter files -->
+  <arg name="ros_param_file2"             default="$(find elevator_recognition)/config/ros2.yaml"/>
+  <arg name="network_param_file2"         default="$(find elevator_recognition)/config/up_bottun.yaml"/>
+
+  <rosparam command="load" ns="darknet_ros2" file="$(arg ros_param_file2)"/>
+  <rosparam command="load" ns="darknet_ros2" file="$(arg network_param_file2)"/>
+
+  <!-- Start darknet and ros wrapper -->
+  <node pkg="darknet_ros" type="darknet_ros" name="darknet_ros2" output="screen" launch-prefix="$(arg launch_prefix)">
+    <param name="weights_path"          value="$(arg yolo_weights_path)" />
+    <param name="config_path"           value="$(arg yolo_config_path)" />
+    <remap from="camera/rgb/image_raw"  to="$(arg image)" />
+  </node>
+
+
+ <!--<node name="republish" type="republish" pkg="image_transport" output="screen" 	args="compressed in:=/front_camera/image_raw raw out:=/camera/image_raw" /> -->
+</launch>

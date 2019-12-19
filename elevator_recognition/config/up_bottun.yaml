@@ -1,12 +1,13 @@
 yolo_model:
 
   config_file:
-    name: e18_net.cfg
+    name: up_net.cfg
   weight_file:
-    name: e18_net_3500.weights
+    name: up_net_4500.weights
   threshold:
     value: 0.2
   detection_classes:
     names:
-      - e18
-      - e18_on
+      - up
+      - up_on
+      - down_on
