@@ -279,7 +279,7 @@ bool PanelAction::back(double distance, double speed){
 bool PanelAction::up_arm(double height, double error_th, int start_number){
   double now_height;
   int now_number = start_number;
-  const int max_number = 15;
+  const int max_number = 17;
   const int min_number = 1;
   elevator_navigation_srv::ArmMotion srv;
   srv.request.number = now_number;

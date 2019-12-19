@@ -23,13 +23,13 @@ bool elevator_action(elevator_navigation_srv::ElevatorAction::Request &req, elev
 {
 
   neck_motion(0);
-  /*
+
 	PanelAction pa;
   //in elevator
 	pa.rotate(M_PI/8);
-	pa.go_panel(0.45);
+	pa.go_panel(0.47);
   pa.rotate_for_bounding_box(330);
-  pa.go_panel(0.45);
+  pa.go_panel(0.47);
   
   int bounding_box_x = 340;
   int bounding_box_stop_number = 1;
@@ -38,21 +38,59 @@ bool elevator_action(elevator_navigation_srv::ElevatorAction::Request &req, elev
   //3kai down 1.22
   //1kai up 1.30
   //1kai down 1.25
-  double bottun_height[2][2] = {{1.25, 1.30}, {1.22, 1.275}};
+  //18kai up 1.23
+  //18kai down 1.18
+  double up_3kai = 1.24;
+  double down_3kai = 1.2;
+  double up_1kai = 1.30;
+  double down_1kai = 1.25;
+  double up_18kai = 1.23;
+  double down_18kai = 1.18;
 
   int floor;
   bool up;
+  double height;
 
-  if (req.start_floor == 1)floor = 0;
-  if (req.start_floor == 3)floor = 1;
+  if (req.start_floor == 1)floor = 1;
+  if (req.start_floor == 3)floor = 3;
+  if (req.start_floor == 18)floor = 18;
 
-  if (req.target_floor - req.start_floor > 0)up = 1;
+  if (req.target_floor > req.start_floor)up = 1;
   else up = 0;
 
-  double height = bottun_height[floor][up];
+  if(up){
+    if(floor == 3){
+      height = up_3kai;
+    }
+    else if(floor == 18){
+      height = up_18kai;
+    }
+    else if(floor == 1){
+      height = up_1kai;
+    }
+    else{
+      ROS_ERROR("no floor");
+    }
+  }
+  else{
+    if(floor == 3){
+      height = down_3kai;
+    }
+    else if(floor == 18){
+      height = down_18kai;
+    }
+    else if(floor == 1){
+      height = down_1kai;
+    }
+    else{
+      ROS_ERROR("no floor");
+    }
+  }
 
-  double stop_distance = 0.45;
-  double go_distance = 0.05;
+  std::cout << "heigth:" << height << std::endl;
+
+  double stop_distance = 0.47;
+  double go_distance = 0.07;
 
   double first_scan_sum, scan_sum;
   first_scan_sum = pa.get_scan_sum();
@@ -62,7 +100,9 @@ bool elevator_action(elevator_navigation_srv::ElevatorAction::Request &req, elev
   while(1){
 
     pa.rotate_for_bounding_box(bounding_box_x);
+    std::cout << "go panel" << std::endl;
     pa.go_panel(stop_distance);
+    std::cout << "up arm" << std::endl;
     pa.up_arm(height, 0.005);
     
     pa.straight(go_distance);
@@ -121,7 +161,6 @@ bool elevator_action(elevator_navigation_srv::ElevatorAction::Request &req, elev
     in_elevator.move();
     pa.home_arm();
   }
-  */
 
   //out elevator
 	PanelAction pa2;
@@ -132,7 +171,7 @@ bool elevator_action(elevator_navigation_srv::ElevatorAction::Request &req, elev
 
   int bounding_box_x2 = 330;
   int bounding_box_stop_number2 = 3;
-  double height2 = 1.30;
+  double height2 = 1.27;
   double height_1kai = 0.98;
   double go_distance_1kai = 0.08;
   double stop_distance_1kai = 0.45;
@@ -159,7 +198,7 @@ bool elevator_action(elevator_navigation_srv::ElevatorAction::Request &req, elev
     else{
       pa2.rotate_for_bounding_box(bounding_box_x2, 2);
       pa2.go_panel(stop_distance2);
-      pa2.up_arm(height2, 0.005);
+      pa2.up_arm(height2, 0.005, 1);
       pa2.straight(go_distance2);
       pa2.straight(-go_distance2);
       pa2.home_arm();
@@ -174,7 +213,7 @@ bool elevator_action(elevator_navigation_srv::ElevatorAction::Request &req, elev
 
  	start_point2.x = 0;
 	start_point2.y = 0;
-	goal_point2.x = 1.8;
+	goal_point2.x = 4;
 	goal_point2.y = 0;
 	Action out_elevator(start_point2, goal_point2, false);
 
