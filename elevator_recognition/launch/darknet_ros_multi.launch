@@ -10,29 +10,28 @@
   <arg name="yolo_config_path"           default="$(find elevator_recognition)/yolo_network_config/cfg"/>
 
   <!-- ROS and network parameter files -->
-  <arg name="ros_param_file"             default="$(find elevator_recognition)/config/ros.yaml"/>
-  <arg name="network_param_file"         default="$(find elevator_recognition)/config/elevator_button.yaml"/>
+  <arg name="ros_param_file_up"             default="$(find elevator_recognition)/config/ros_e1.yaml"/>
+  <arg name="network_param_file_up"         default="$(find elevator_recognition)/config/up.yaml"/>
 
-  <!-- Load parameters -->
-  <rosparam command="load" ns="darknet_ros" file="$(arg ros_param_file)"/>
-  <rosparam command="load" ns="darknet_ros" file="$(arg network_param_file)"/>
+  <rosparam command="load" ns="darknet_ros_up" file="$(arg ros_param_file_up)"/>
+  <rosparam command="load" ns="darknet_ros_up" file="$(arg network_param_file_up)"/>
 
   <!-- Start darknet and ros wrapper -->
-  <node pkg="darknet_ros" type="darknet_ros" name="darknet_ros" output="screen" launch-prefix="$(arg launch_prefix)">
+  <node pkg="darknet_ros" type="darknet_ros" name="darknet_ros_up" output="screen" launch-prefix="$(arg launch_prefix)">
     <param name="weights_path"          value="$(arg yolo_weights_path)" />
     <param name="config_path"           value="$(arg yolo_config_path)" />
     <remap from="camera/rgb/image_raw"  to="$(arg image)" />
   </node>
 
   <!-- ROS and network parameter files -->
-  <arg name="ros_param_file2"             default="$(find elevator_recognition)/config/ros2.yaml"/>
-  <arg name="network_param_file2"         default="$(find elevator_recognition)/config/up_bottun.yaml"/>
+  <arg name="ros_param_file_e18"             default="$(find elevator_recognition)/config/ros_e18.yaml"/>
+  <arg name="network_param_file_e18"         default="$(find elevator_recognition)/config/e18.yaml"/>
 
-  <rosparam command="load" ns="darknet_ros2" file="$(arg ros_param_file2)"/>
-  <rosparam command="load" ns="darknet_ros2" file="$(arg network_param_file2)"/>
+  <rosparam command="load" ns="darknet_ros_e18" file="$(arg ros_param_file_e18)"/>
+  <rosparam command="load" ns="darknet_ros_e18" file="$(arg network_param_file_e18)"/>
 
   <!-- Start darknet and ros wrapper -->
-  <node pkg="darknet_ros" type="darknet_ros" name="darknet_ros2" output="screen" launch-prefix="$(arg launch_prefix)">
+  <node pkg="darknet_ros" type="darknet_ros" name="darknet_ros_e18" output="screen" launch-prefix="$(arg launch_prefix)">
     <param name="weights_path"          value="$(arg yolo_weights_path)" />
     <param name="config_path"           value="$(arg yolo_config_path)" />
     <remap from="camera/rgb/image_raw"  to="$(arg image)" />

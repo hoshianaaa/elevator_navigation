@@ -1,0 +1,12 @@
+yolo_model:
+
+  config_file:
+    name: e1_net.cfg
+  weight_file:
+    name: e1_net_3500.weights
+  threshold:
+    value: 0.2
+  detection_classes:
+    names:
+      - e1
+      - e1_on

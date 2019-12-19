@@ -17,7 +17,7 @@ publishers:
     latch: false
 
   bounding_boxes:
-    topic: /darknet_ros2/bounding_boxes
+    topic: /darknet_ros_e18/bounding_boxes
     queue_size: 1
     latch: false
 
