@@ -5,7 +5,8 @@
 
 bool push_bottun(elevator_navigation_srv::PushBottun::Request &req, elevator_navigation_srv::PushBottun::Response &res)
 {
-	PanelAction pa;
+	PanelAction pa("up");
+  pa.track_b_box_start(2);
 
   //pa.rotate_for_bounding_box(req.bounding_box_x);
   //pa.go_panel(0.45);
@@ -13,7 +14,8 @@ bool push_bottun(elevator_navigation_srv::PushBottun::Request &req, elevator_nav
 
   int loop = 1;
   while(loop){
-    pa.up_arm(1.18, 0.005);
+    std::cout << "found b box 2:" << pa.get_found_b_box_state() << std::endl;
+    //pa.up_arm(1.18, 0.005);
     /*
     //pa.rotate_for_bounding_box(330);
     pa.rotate_for_bounding_box(req.bounding_box_x);

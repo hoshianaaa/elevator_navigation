@@ -22,16 +22,46 @@ void neck_motion(int number){
 bool elevator_action(elevator_navigation_srv::ElevatorAction::Request &req, elevator_navigation_srv::ElevatorAction::Response &res)
 {
 
+  double bounding_box_x;
+  double go_distance;
+  double rotate_angle;
+  //in elevator
+  double bounding_box_x_in_18 = 330;
+  double bounding_box_x_in_3 = 320;
+  double bounding_box_x_in_1 = 330;
+  double go_distance_in_18 = 0.07;
+  double go_distance_in_3 = 0.07;
+  double go_distance_in_1 = 0.1;
+  double rotate_angle_in_18 = M_PI/8;
+  double rotate_angle_in_3 = M_PI/8;
+  double rotate_angle_in_1 = M_PI/6;
+
+ if (req.start_floor == 18){
+    bounding_box_x = bounding_box_x_in_18;
+    go_distance = go_distance_in_18;
+    rotate_angle = rotate_angle_in_18;
+  }
+  if (req.start_floor == 3){
+    bounding_box_x = bounding_box_x_in_3;
+    go_distance = go_distance_in_3;
+    rotate_angle = rotate_angle_in_3;
+  }
+  if (req.start_floor == 1){
+    bounding_box_x = bounding_box_x_in_1;
+    go_distance = go_distance_in_1;
+    rotate_angle = rotate_angle_in_1;
+  }
+
   neck_motion(0);
 
-	PanelAction pa;
-  //in elevator
-	pa.rotate(M_PI/8);
-	pa.go_panel(0.47);
-  pa.rotate_for_bounding_box(330);
-  pa.go_panel(0.47);
-  
-  int bounding_box_x = 340;
+	PanelAction pa_up("up");
+  pa_up.home_arm();
+///*
+	pa_up.rotate(rotate_angle);
+	pa_up.go_panel(0.47);
+ 
+  pa_up.rotate_for_bounding_box(bounding_box_x);
+  pa_up.go_panel(0.47);
   int bounding_box_stop_number = 1;
 
   //3kai up 1.275 
@@ -42,10 +72,19 @@ bool elevator_action(elevator_navigation_srv::ElevatorAction::Request &req, elev
   //18kai down 1.18
   double up_3kai = 1.24;
   double down_3kai = 1.2;
-  double up_1kai = 1.30;
-  double down_1kai = 1.25;
+  double up_1kai = 1.26;
+  double down_1kai = 1.22;
   double up_18kai = 1.23;
-  double down_18kai = 1.18;
+  double down_18kai = 1.17;
+
+  double up_arm_error_th = 0.01;
+  int start_arm_number = 5;
+  int up_3kai_arm_number = 9;
+  int down_3kai_arm_number = 15;
+  int up_1kai_arm_number = 9;
+  int down_1kai_arm_number = 15;
+  int up_18kai_arm_number = 9;
+  int down_18kai_arm_number = 15;
 
   int floor;
   bool up;
@@ -61,12 +100,15 @@ bool elevator_action(elevator_navigation_srv::ElevatorAction::Request &req, elev
   if(up){
     if(floor == 3){
       height = up_3kai;
+      start_arm_number = up_3kai_arm_number;
     }
     else if(floor == 18){
       height = up_18kai;
+      start_arm_number = up_18kai_arm_number;
     }
     else if(floor == 1){
       height = up_1kai;
+      start_arm_number = up_1kai_arm_number;
     }
     else{
       ROS_ERROR("no floor");
@@ -75,12 +117,15 @@ bool elevator_action(elevator_navigation_srv::ElevatorAction::Request &req, elev
   else{
     if(floor == 3){
       height = down_3kai;
+      start_arm_number = down_3kai_arm_number;
     }
     else if(floor == 18){
       height = down_18kai;
+      start_arm_number = down_18kai_arm_number;
     }
     else if(floor == 1){
       height = down_1kai;
+      start_arm_number = down_1kai_arm_number;
     }
     else{
       ROS_ERROR("no floor");
@@ -90,45 +135,51 @@ bool elevator_action(elevator_navigation_srv::ElevatorAction::Request &req, elev
   std::cout << "heigth:" << height << std::endl;
 
   double stop_distance = 0.47;
-  double go_distance = 0.07;
 
   double first_scan_sum, scan_sum;
-  first_scan_sum = pa.get_scan_sum();
+  first_scan_sum = pa_up.get_scan_sum();
   std::cout << std::endl << std::endl <<  "first scan sum!!!!!!!:" << first_scan_sum << std::endl;
 
   int id = 0;
+
+
+  int track_b_box_id;
+  if(up)track_b_box_id = 1;
+  if(!up)track_b_box_id = 2;
+
+  pa_up.track_b_box_start(track_b_box_id);
   while(1){
 
-    pa.rotate_for_bounding_box(bounding_box_x);
+    pa_up.rotate_for_bounding_box(bounding_box_x);
     std::cout << "go panel" << std::endl;
-    pa.go_panel(stop_distance);
+    pa_up.go_panel(stop_distance);
     std::cout << "up arm" << std::endl;
-    pa.up_arm(height, 0.005);
+    pa_up.up_arm(height, up_arm_error_th, start_arm_number);
     
-    pa.straight(go_distance);
+    pa_up.straight(go_distance);
 
-    scan_sum = pa.get_scan_sum();
+    scan_sum = pa_up.get_scan_sum();
     std::cout << "scan sum!!!!!!!!!:" << scan_sum << std::endl;
-    if((scan_sum - first_scan_sum) > 60){
+    if((scan_sum - first_scan_sum) > 30){
      std::cout << "open the door!!!!!!!!!!"  << std::endl;
-      pa.back(0.5, 0.5);
       id = 2;
       break;
     }
 
-    pa.straight(-go_distance);
+    pa_up.straight(-go_distance);
 
-
-    pa.home_arm();
-    if (pa.find_bounding_box(1)){
+    pa_up.home_arm();
+    sleep(6);
+    std::cout << "find bbox 1:" << pa_up.get_found_b_box_state() << std::endl;
+    if (pa_up.get_found_b_box_state()){
       id =1;
       break;
     }
-
   }
 
   geometry_msgs::Point start_point, goal_point;
   if(id == 1){
+    /*
     start_point.x = 2;
     start_point.y = -0.7;
     goal_point.x = 2;
@@ -146,8 +197,10 @@ bool elevator_action(elevator_navigation_srv::ElevatorAction::Request &req, elev
 
     near_elevator.rotate(0.3, 0.3);
     near_elevator.move();
+    */
   }
-
+  pa_up.track_b_box_clear();
+  pa_up.back(0.5, 0.5);
  	start_point.x = 1.8;
 	start_point.y = 0;
 	goal_point.x = 0;
@@ -159,21 +212,23 @@ bool elevator_action(elevator_navigation_srv::ElevatorAction::Request &req, elev
   if(id == 2){
     Action in_elevator(start_point, goal_point, true, false);
     in_elevator.move();
-    pa.home_arm();
+    pa_up.home_arm();
   }
-
+  //*/
   //out elevator
-	PanelAction pa2;
-	pa2.rotate(-M_PI/6);
-	pa2.go_panel(0.45);
-  pa2.rotate_for_bounding_box(340, 2);
-  pa2.go_panel(0.45);
+  pa_up.home_arm();
+	PanelAction pa_e18("e18");
+	PanelAction pa_e1("e1");
+	pa_e18.rotate(-M_PI/6);
+	pa_e18.go_panel(0.45);
+  pa_e18.rotate_for_bounding_box(330, 0, 20);
+  pa_e18.go_panel(0.45);
 
-  int bounding_box_x2 = 330;
+  int bounding_box_x2 = 325;
   int bounding_box_stop_number2 = 3;
-  double height2 = 1.27;
-  double height_1kai = 0.98;
-  double go_distance_1kai = 0.08;
+  double height_e18 = 1.26;
+  double height_e1 = 0.98;
+  double go_distance_1kai = 0.1;
   double stop_distance_1kai = 0.45;
   double stop_distance2 = 0.45;
   double go_distance2 = 0.09;
@@ -186,28 +241,41 @@ bool elevator_action(elevator_navigation_srv::ElevatorAction::Request &req, elev
 
   while(1){
     if (req.target_floor == 1){
-      pa2.home_arm_down();
-      pa2.rotate_for_bounding_box(bounding_box_x2, 4);
-      pa2.go_panel(stop_distance_1kai);
-      pa2.down_arm(height_1kai, 0.005);
-      pa2.straight(go_distance_1kai);
-      pa2.straight(-go_distance_1kai);
-      pa2.home_arm_down();
-      if (pa2.find_bounding_box(5))break;
+      pa_e1.home_arm_down();
+      if (pa_e1.find_bounding_box(1))break;
+      pa_e1.rotate_for_bounding_box(bounding_box_x2);
+      if (pa_e1.find_bounding_box(1))break;
+      pa_e1.go_panel(stop_distance_1kai);
+      pa_e1.down_arm(height_e1, up_arm_error_th);
+      pa_e1.straight(go_distance_1kai);
+      pa_e1.straight(-go_distance_1kai);
+      if (pa_e1.find_bounding_box(1))break;
+      pa_e1.home_arm_down();
+      sleep(4);
+      std::cout << "bbox1:" << pa_e1.find_bounding_box(1) << std::endl;
+      if (pa_e1.find_bounding_box(1))break;
     }
     else{
-      pa2.rotate_for_bounding_box(bounding_box_x2, 2);
-      pa2.go_panel(stop_distance2);
-      pa2.up_arm(height2, 0.005, 1);
-      pa2.straight(go_distance2);
-      pa2.straight(-go_distance2);
-      pa2.home_arm();
-      if (pa2.find_bounding_box(3))break;
+      if (pa_e18.find_bounding_box(1))break;
+      pa_e18.rotate_for_bounding_box(bounding_box_x2);
+      if (pa_e18.find_bounding_box(1))break;
+      pa_e18.go_panel(stop_distance2);
+      if (pa_e18.find_bounding_box(1))break;
+      pa_e18.up_arm(height_e18, up_arm_error_th, 1);
+      if (pa_e18.find_bounding_box(1))break;
+      pa_e18.straight(go_distance2);
+      pa_e18.straight(-go_distance2);
+      if (pa_e18.find_bounding_box(1))break;
+      pa_e18.home_arm();
+      sleep(4);
+      std::cout << "bbox1:" << pa_e18.find_bounding_box(1) << std::endl;
+      if (pa_e18.find_bounding_box(1))break;
     }
   }
 
-  pa2.back(0.50);
-  pa2.rotate_home();
+  pa_e18.back(0.50);
+  pa_e18.rotate_home();
+  pa_up.home_arm();
 
   geometry_msgs::Point start_point2, goal_point2;
 
@@ -219,6 +287,7 @@ bool elevator_action(elevator_navigation_srv::ElevatorAction::Request &req, elev
 
   out_elevator.move();
 
+  pa_up.home_arm();
   res.status = true;
   return true;
 }

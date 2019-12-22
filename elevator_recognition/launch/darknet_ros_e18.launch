@@ -10,8 +10,8 @@
   <arg name="yolo_config_path"           default="$(find elevator_recognition)/yolo_network_config/cfg"/>
 
   <!-- ROS and network parameter files -->
-  <arg name="ros_param_file"             default="$(find elevator_recognition)/config/ros_e1.yaml"/>
-  <arg name="network_param_file"         default="$(find elevator_recognition)/config/e1.yaml"/>
+  <arg name="ros_param_file"             default="$(find elevator_recognition)/config/ros_e18.yaml"/>
+  <arg name="network_param_file"         default="$(find elevator_recognition)/config/e18.yaml"/>
 
   <!-- Load parameters -->
   <rosparam command="load" ns="darknet_ros" file="$(arg ros_param_file)"/>

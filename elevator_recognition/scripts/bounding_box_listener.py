@@ -18,11 +18,12 @@ publish: bounding box x,y coordinate
 '''
  
 class bounding_box_listener():
-  def __init__(self):
-    self.bounding_box_subscriber = rospy.Subscriber("/darknet_ros/bounding_boxes", BoundingBoxes, self.bounding_boxes_callback)
-    self.bounding_box_pos_pub = rospy.Publisher("bounding_box_pos", PoseArray, queue_size=1)
+  def __init__(self, name):
+    sub_topic_name = "/darknet_ros_" + name + "/bounding_boxes"
+    pub_topic_name = name + "bounding_box_pos"
+    self.bounding_box_subscriber = rospy.Subscriber(sub_topic_name, BoundingBoxes, self.bounding_boxes_callback)
+    self.bounding_box_pos_pub = rospy.Publisher(pub_topic_name, PoseArray, queue_size=1)
 
-  #id up:0 up_on:1 e18:2 e18_on:3
   def bounding_boxes_callback(self, msg):
     print("call back")
     
@@ -48,7 +49,9 @@ class bounding_box_listener():
 
 def main():
   rospy.init_node('bounding_box_listener')	
-  bl = bounding_box_listener()
+  bl_up = bounding_box_listener("up")
+  bl_e18 = bounding_box_listener("e18")
+  bl_e1 = bounding_box_listener("e1")
   rospy.spin()
 
 if __name__ == '__main__':

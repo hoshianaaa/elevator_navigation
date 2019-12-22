@@ -115,7 +115,7 @@ bool Action::rotate(double speed, double goal_angle_th){
 }
 
 bool Action::StopRobot(){
-	if (sensor_data_min_ < 0.6){
+	if (sensor_data_min_ < 0.6 && do_stop_robot_){
 		std::cout << "stop!!" << sensor_data_min_ <<  std::endl;
 		return 1;
 	}

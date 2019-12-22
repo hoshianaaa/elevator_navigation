@@ -27,7 +27,7 @@ public:
 
 class PanelAction{
 public:
-	PanelAction();
+	PanelAction(std::string name = "");
 	bool rotate_for_target_angle(double target_angle);
 	bool rotate(double angle);
 	bool rotate_home();
@@ -35,13 +35,16 @@ public:
   bool line_tracking_stop_point(double x, double y, double angle);
 	bool go_panel(double stop_distance);
 	bool back(double distance, double speed=0.1);
-  bool rotate_for_bounding_box(const int bounding_box_target_x, const int target_id = 0);
+  bool rotate_for_bounding_box(const int bounding_box_target_x = 330, const int target_id = 0, const int error_th = 5);
   bool up_arm(double height, double error_th, int start_number = 4);
   bool down_arm(double height, double error_th, int start_number = 2);
   bool home_arm();
   bool home_arm_down();
   bool find_bounding_box(const int id = 1);
   double get_scan_sum();
+  void track_b_box_start(int id);
+  void track_b_box_clear();
+  bool get_found_b_box_state();
 
 private:
 	void scanCallback(const sensor_msgs::LaserScan::ConstPtr& msg);
@@ -69,6 +72,9 @@ private:
 
   std::vector<BoundingBox> boxes_;
   int bounding_box_lock_;
+
+  bool found_b_box_;
+  int track_b_box_id_;
 
   double scan_sum_;
 };

@@ -3,7 +3,7 @@ yolo_model:
   config_file:
     name: e1_net.cfg
   weight_file:
-    name: e1_net_3500.weights
+    name: e1_net_5000.weights
   threshold:
     value: 0.2
   detection_classes:

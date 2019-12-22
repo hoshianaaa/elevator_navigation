@@ -1,10 +1,14 @@
 #include <elevator_waypoints_nav/panel_action.h>
-PanelAction::PanelAction()
+const int STOP_TRACK_B_BOX = 3333333;
+
+PanelAction::PanelAction(std::string name)
 {
 	//std::cout << "panel action class" << std::endl;
 	velocity_pub_ = n_.advertise<geometry_msgs::Twist>("icart_mini/cmd_vel", 1);
 	scan_sub_ = n_.subscribe("scan", 1, &PanelAction::scanCallback, this);
-	bounding_box_sub_ = n_.subscribe("bounding_box_pos", 1, &PanelAction::boundingBoxCallback, this);
+  
+  std::string topic_name = name + "bounding_box_pos";
+	bounding_box_sub_ = n_.subscribe(topic_name, 1, &PanelAction::boundingBoxCallback, this);
   arm_motion_client_ = n_.serviceClient<elevator_navigation_srv::ArmMotion>("arm_motion");
   arm_motion_down_client_ = n_.serviceClient<elevator_navigation_srv::ArmMotionDown>("arm_motion_down");
 	
@@ -19,6 +23,9 @@ PanelAction::PanelAction()
 	home_point_ = robot_point_;
 
   bounding_box_lock_ = 4;
+
+  track_b_box_id_ = STOP_TRACK_B_BOX;
+  found_b_box_ = 0;
 }
 
 void PanelAction::scanCallback(const sensor_msgs::LaserScan::ConstPtr& msg){
@@ -34,7 +41,7 @@ bool PanelAction::rotate_for_target_angle(double target_angle)
 {
 	ros::Rate loop_rate(freq_);
   const double limit_ang_vel = 0.3;
-  const double error_th = M_PI/180*0.5;
+  const double error_th = M_PI/180;
   int counter = 0;
   geometry_msgs::Twist vel;
 
@@ -46,7 +53,7 @@ bool PanelAction::rotate_for_target_angle(double target_angle)
 
     if((robot_point_.z > target_angle - error_th) && (robot_point_.z < target_angle + error_th))counter++;
     else counter = 0;
-    if(counter>20)break;
+    if(counter>5)break;
 
     double diff = target_angle - robot_point_.z;
     fix_angle(diff);
@@ -421,17 +428,25 @@ void PanelAction::boundingBoxCallback(const geometry_msgs::PoseArray::ConstPtr& 
   for(int i=0;i<msg->poses.size();i++){
     b.x = msg ->poses[i].position.x;
     b.id = msg ->poses[i].position.z;
+    std::cout << "debug0 track_b_box_id:"<< track_b_box_id_ << std::endl;
+    if(track_b_box_id_ != STOP_TRACK_B_BOX){
+      std::cout << "debug1 !!!!!" << std::endl;
+      if(b.id == track_b_box_id_){
+        found_b_box_ = 1;
+        std::cout << "debug2 !!!!! found_b_box:" << found_b_box_ << std::endl;
+      }
+    }
     boxes_.push_back(b);
   }
 
   if(bounding_box_lock_)bounding_box_lock_--;
-  
+
+ 
 }
 
 
 //id up:0 up_on:1 e18:2 e18_on:3
-bool PanelAction::rotate_for_bounding_box(const int bounding_box_target_x, const int target_id){
-  const int error_th = 5;
+bool PanelAction::rotate_for_bounding_box(const int bounding_box_target_x, const int target_id, const int error_th){
   const double max_ang_vel = 0.2;
   const int bounding_box_wait_count = 4;
   const int publish_vel_count = 3;
@@ -488,3 +503,18 @@ double PanelAction::get_scan_sum(){
   return scan_sum_;
 }
 
+void PanelAction::track_b_box_start(int id){
+  track_b_box_id_ = id;
+}
+
+void PanelAction::track_b_box_clear(){
+  track_b_box_id_ = 333;
+  found_b_box_ = 0;
+}
+
+bool PanelAction::get_found_b_box_state(){
+  ros::Rate r(10);
+  r.sleep();
+  ros::spinOnce();
+  return found_b_box_;
+}
