@@ -428,12 +428,12 @@ void PanelAction::boundingBoxCallback(const geometry_msgs::PoseArray::ConstPtr& 
   for(int i=0;i<msg->poses.size();i++){
     b.x = msg ->poses[i].position.x;
     b.id = msg ->poses[i].position.z;
-    std::cout << "debug0 track_b_box_id:"<< track_b_box_id_ << std::endl;
+    //std::cout << "debug0 track_b_box_id:"<< track_b_box_id_ << std::endl;
     if(track_b_box_id_ != STOP_TRACK_B_BOX){
-      std::cout << "debug1 !!!!!" << std::endl;
+      //std::cout << "debug1 !!!!!" << std::endl;
       if(b.id == track_b_box_id_){
         found_b_box_ = 1;
-        std::cout << "debug2 !!!!! found_b_box:" << found_b_box_ << std::endl;
+        //std::cout << "debug2 !!!!! found_b_box:" << found_b_box_ << std::endl;
       }
     }
     boxes_.push_back(b);
@@ -492,7 +492,7 @@ bool PanelAction::rotate_for_bounding_box(const int bounding_box_target_x, const
     if (orientation>publish_vel_count){vel.angular.z=0;orientation=0;}
     else if (orientation< -publish_vel_count){vel.angular.z=0;orientation=0;}
     if(break_state)break;
-    std::cout << "vel:" << vel.angular.z << "ori:" << orientation << "error:" << bounding_box_x_error << std::endl;
+    //std::cout << "vel:" << vel.angular.z << "ori:" << orientation << "error:" << bounding_box_x_error << std::endl;
     velocity_pub_.publish(vel);
     r.sleep();
     ros::spinOnce();
@@ -500,6 +500,9 @@ bool PanelAction::rotate_for_bounding_box(const int bounding_box_target_x, const
 }
 
 double PanelAction::get_scan_sum(){
+  ros::Rate r(20);
+  r.sleep();
+  ros::spinOnce();
   return scan_sum_;
 }
 

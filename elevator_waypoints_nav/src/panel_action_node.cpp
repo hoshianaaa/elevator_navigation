@@ -160,7 +160,8 @@ bool elevator_action(elevator_navigation_srv::ElevatorAction::Request &req, elev
 
     scan_sum = pa_up.get_scan_sum();
     std::cout << "scan sum!!!!!!!!!:" << scan_sum << std::endl;
-    if((scan_sum - first_scan_sum) > 30){
+    std::cout << "first scan sum!!!!!!!!!:" << first_scan_sum << std::endl;
+    if((scan_sum - first_scan_sum) > 10){
      std::cout << "open the door!!!!!!!!!!"  << std::endl;
       id = 2;
       break;
@@ -168,13 +169,30 @@ bool elevator_action(elevator_navigation_srv::ElevatorAction::Request &req, elev
 
     pa_up.straight(-go_distance);
 
+    if((scan_sum - first_scan_sum) > 10){
+     std::cout << "open the door!!!!!!!!!!"  << std::endl;
+      id = 2;
+      break;
+    }
+
+
     pa_up.home_arm();
+
+    if((scan_sum - first_scan_sum) > 10){
+     std::cout << "open the door!!!!!!!!!!"  << std::endl;
+      id = 2;
+      break;
+    }
+
+
     sleep(6);
     std::cout << "find bbox 1:" << pa_up.get_found_b_box_state() << std::endl;
     if (pa_up.get_found_b_box_state()){
       id =1;
       break;
     }
+
+    go_distance += 0.01;
   }
 
   geometry_msgs::Point start_point, goal_point;
@@ -216,10 +234,11 @@ bool elevator_action(elevator_navigation_srv::ElevatorAction::Request &req, elev
   }
   //*/
   //out elevator
+  double rotate_out = -M_PI/4;
   pa_up.home_arm();
 	PanelAction pa_e18("e18");
 	PanelAction pa_e1("e1");
-	pa_e18.rotate(-M_PI/6);
+	pa_e18.rotate(rotate_out);
 	pa_e18.go_panel(0.45);
   pa_e18.rotate_for_bounding_box(330, 0, 20);
   pa_e18.go_panel(0.45);
@@ -273,9 +292,11 @@ bool elevator_action(elevator_navigation_srv::ElevatorAction::Request &req, elev
     }
   }
 
-  pa_e18.back(0.50);
+  pa_e18.back(0.5, 0.5);
   pa_e18.rotate_home();
-  pa_up.home_arm();
+  
+  double OPEN_DOOR_SENSOR_SUM_TH = 1000;
+  if(pa_e18.get_scan_sum() < OPEN_DOOR_SENSOR_SUM_TH)pa_up.home_arm();
 
   geometry_msgs::Point start_point2, goal_point2;
 
@@ -285,7 +306,10 @@ bool elevator_action(elevator_navigation_srv::ElevatorAction::Request &req, elev
 	goal_point2.y = 0;
 	Action out_elevator(start_point2, goal_point2, false);
 
+  std::cout << "debug out elevator start" << std::endl;
   out_elevator.move();
+  std::cout << "debug out elevator finish" << std::endl;
+  
 
   pa_up.home_arm();
   res.status = true;

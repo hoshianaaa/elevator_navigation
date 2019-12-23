@@ -126,7 +126,7 @@ bool Action::on_goal(){
 
 	double goal_distance_th, dx, dy, dis;
 
-	goal_distance_th = 0.2;
+	goal_distance_th = 0.4;
 	get_robot_pose();
 
 	dx = robot_point_.x - goal_point_.x;
@@ -257,7 +257,7 @@ class sensor_data{
 };
 
 void Action::scanCallback(const sensor_msgs::LaserScanPtr& msg){
-	std::cout << "scan call back" << std::endl;
+	//std::cout << "scan call back" << std::endl;
 	int num = (msg->angle_max - msg->angle_min) / msg->angle_increment;
 
 	std::vector<sensor_data> datas;
@@ -276,7 +276,7 @@ void Action::scanCallback(const sensor_msgs::LaserScanPtr& msg){
 	}
 
 	sensor_data_min_ = min;
-	std::cout << "sensor data mini:" <<  sensor_data_min_ << std::endl;
+	//std::cout << "sensor data mini:" <<  sensor_data_min_ << std::endl;
 }
 
 void Action::print_env_data(){

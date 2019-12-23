@@ -25,7 +25,7 @@ class bounding_box_listener():
     self.bounding_box_pos_pub = rospy.Publisher(pub_topic_name, PoseArray, queue_size=1)
 
   def bounding_boxes_callback(self, msg):
-    print("call back")
+    #print("call back")
     
     poses = PoseArray()
     pose = Pose()
