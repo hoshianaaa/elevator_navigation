@@ -15,6 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
   pcl_msgs
   pcl_ros
   elevator_navigation_srv
+  elevator_navigation_msgs
   roslib
 )
 

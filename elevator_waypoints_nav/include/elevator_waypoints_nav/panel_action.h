@@ -16,8 +16,11 @@
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
 
-#include <elevator_navigation_srv/ArmMotion.h>
-#include <elevator_navigation_srv/ArmMotionDown.h>
+#include <elevator_navigation_msgs/ArmMotionAction.h>
+#include <actionlib/client/simple_action_client.h>
+
+
+typedef actionlib::SimpleActionClient<elevator_navigation_msgs::ArmMotionAction> ArmMotionClient;
 
 class BoundingBox{
 public:
@@ -46,6 +49,10 @@ public:
   void track_b_box_clear();
   bool get_found_b_box_state();
 
+  void check_door_start();
+  void check_door_stop();
+  bool stop_action();
+
 private:
 	void scanCallback(const sensor_msgs::LaserScan::ConstPtr& msg);
 	void boundingBoxCallback(const geometry_msgs::PoseArray::ConstPtr& msg);
@@ -53,8 +60,7 @@ private:
 	ros::Publisher velocity_pub_;
 	ros::Subscriber scan_sub_;
 	ros::Subscriber bounding_box_sub_;
-	ros::ServiceClient arm_motion_client_, arm_motion_down_client_;
-	
+  ArmMotionClient *arm_motion_client_, *arm_motion_down_client_;
 	tf::TransformListener tf_listener_;
 	std::string robot_frame_, global_frame_, ar_marker_frame_;
 	
@@ -73,8 +79,15 @@ private:
   std::vector<BoundingBox> boxes_;
   int bounding_box_lock_;
 
+  int search_b_box_;
   bool found_b_box_;
   int track_b_box_id_;
 
   double scan_sum_;
+  double first_scan_sum_;
+
+  int do_check_door_;
+  int open_door_;
+  std::string name_;
+
 };

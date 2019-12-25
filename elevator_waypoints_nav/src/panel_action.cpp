@@ -3,14 +3,13 @@ const int STOP_TRACK_B_BOX = 3333333;
 
 PanelAction::PanelAction(std::string name)
 {
-	//std::cout << "panel action class" << std::endl;
+	std::cout << "panel action class" << std::endl;
 	velocity_pub_ = n_.advertise<geometry_msgs::Twist>("icart_mini/cmd_vel", 1);
 	scan_sub_ = n_.subscribe("scan", 1, &PanelAction::scanCallback, this);
   
   std::string topic_name = name + "bounding_box_pos";
+  name_ = name;
 	bounding_box_sub_ = n_.subscribe(topic_name, 1, &PanelAction::boundingBoxCallback, this);
-  arm_motion_client_ = n_.serviceClient<elevator_navigation_srv::ArmMotion>("arm_motion");
-  arm_motion_down_client_ = n_.serviceClient<elevator_navigation_srv::ArmMotionDown>("arm_motion_down");
 	
 	scan_lock_ = 1;
 	robot_frame_  = "base_link";
@@ -26,6 +25,18 @@ PanelAction::PanelAction(std::string name)
 
   track_b_box_id_ = STOP_TRACK_B_BOX;
   found_b_box_ = 0;
+
+  scan_sum_ = 0;
+  first_scan_sum_ = 0;
+  search_b_box_ = 0;
+  do_check_door_ = 0;
+  open_door_ = 0;
+
+  arm_motion_client_ = new ArmMotionClient("arm_motion", true);
+
+  arm_motion_down_client_ = new ArmMotionClient("arm_motion_down", true);
+  arm_motion_client_->waitForServer();
+  arm_motion_down_client_->waitForServer();
 }
 
 void PanelAction::scanCallback(const sensor_msgs::LaserScan::ConstPtr& msg){
@@ -34,6 +45,12 @@ void PanelAction::scanCallback(const sensor_msgs::LaserScan::ConstPtr& msg){
   scan_sum_ = 0;
   for(int i=0;i<msg->ranges.size();i++){
     scan_sum_ += msg->ranges[i];
+  }
+  //std::cout << "scan call back , scan sum:" << scan_sum_ << std::endl;
+
+  if((scan_sum_ - first_scan_sum_ > 30) && do_check_door_){
+    ROS_INFO("detect open the door");
+    open_door_ = 1;
   }
 }
 
@@ -230,6 +247,7 @@ bool PanelAction::go_panel(double stop_distance){
   }
 
 	while(1){
+    if (stop_action())return 1;
 		geometry_msgs::Twist vel;
 
     get_robot_pose();
@@ -251,6 +269,7 @@ bool PanelAction::go_panel(double stop_distance){
 		loop_rate.sleep();
 		ros::spinOnce();
 	}
+  return 0;
 }
 
 bool PanelAction::back(double distance, double speed){
@@ -288,12 +307,17 @@ bool PanelAction::up_arm(double height, double error_th, int start_number){
   int now_number = start_number;
   const int max_number = 17;
   const int min_number = 1;
-  elevator_navigation_srv::ArmMotion srv;
-  srv.request.number = now_number;
-  arm_motion_client_.call(srv);
+
+  elevator_navigation_msgs::ArmMotionGoal goal;
+  ROS_INFO("arm motion:%d", now_number);
+  goal.number = start_number;
+  arm_motion_client_->sendGoal(goal);
+  arm_motion_client_->waitForResult(ros::Duration(20.0));
+
   int loop = 1;
   
   while(loop){
+    if (stop_action())return 1;
     if (get_ar_marker_pose(now_height)){
       if (std::fabs(height - now_height) < error_th){
         ROS_INFO("finish");
@@ -301,23 +325,21 @@ bool PanelAction::up_arm(double height, double error_th, int start_number){
       }
       else if (height - now_height < 0){
         if (now_number < max_number)now_number++;
-        srv.request.number = now_number;
-        ROS_INFO("arm motion:%d", now_number);
-        arm_motion_client_.call(srv);
       }
       else if (height - now_height > 0){
         if (now_number > min_number)now_number--;
-        srv.request.number = now_number;
-        ROS_INFO("arm motion:%d", now_number);
-        arm_motion_client_.call(srv);
       }
-      
+      ROS_INFO("arm motion:%d", now_number);
+      goal.number = now_number;
+      arm_motion_client_->sendGoal(goal);
+      arm_motion_client_->waitForResult(ros::Duration(5.0));
     }
     else
     {
       ROS_ERROR("cannot get ar_marker pose");
     }
   }
+  return 0;
 }
 
 bool PanelAction::down_arm(double height, double error_th, int start_number){
@@ -325,9 +347,12 @@ bool PanelAction::down_arm(double height, double error_th, int start_number){
   int now_number = start_number;
   const int max_number = 5;
   const int min_number = 1;
-  elevator_navigation_srv::ArmMotionDown srv;
-  srv.request.number = now_number;
-  arm_motion_down_client_.call(srv);
+
+  elevator_navigation_msgs::ArmMotionGoal goal;
+  goal.number = start_number;
+  arm_motion_down_client_->sendGoal(goal);
+  arm_motion_down_client_->waitForResult(ros::Duration(20.0));
+
   int loop = 1;
   
   while(loop){
@@ -339,17 +364,13 @@ bool PanelAction::down_arm(double height, double error_th, int start_number){
       }
       else if (height - now_height < 0){
         if (now_number < max_number)now_number++;
-        srv.request.number = now_number;
-        ROS_INFO("arm motion down (down):%d", now_number);
-        arm_motion_down_client_.call(srv);
-      }
+        }
       else if (height - now_height > 0){
         if (now_number > min_number)now_number--;
-        srv.request.number = now_number;
-        ROS_INFO("arm motion down (up):%d", now_number);
-        arm_motion_down_client_.call(srv);
-      }
-      
+        }
+      goal.number = now_number;
+      arm_motion_down_client_->sendGoal(goal);
+      arm_motion_down_client_->waitForResult(ros::Duration(20.0));
     }
     else
     {
@@ -360,17 +381,15 @@ bool PanelAction::down_arm(double height, double error_th, int start_number){
 
 
 bool PanelAction::home_arm(){
-  elevator_navigation_srv::ArmMotion srv;
-  srv.request.number = 0;
-  ROS_INFO("arm motion:%d", 0);
-  arm_motion_client_.call(srv);
+  elevator_navigation_msgs::ArmMotionGoal goal;
+  goal.number = 0;
+  arm_motion_client_->sendGoal(goal);
 }
 
 bool PanelAction::home_arm_down(){
-  elevator_navigation_srv::ArmMotionDown srv;
-  srv.request.number = 0;
-  ROS_INFO("arm motion:%d", 0);
-  arm_motion_down_client_.call(srv);
+  elevator_navigation_msgs::ArmMotionGoal goal;
+  goal.number = 0;
+  arm_motion_client_->sendGoal(goal);
 }
  
 
@@ -425,15 +444,13 @@ void PanelAction::boundingBoxCallback(const geometry_msgs::PoseArray::ConstPtr& 
   BoundingBox b;
   boxes_.clear();
 
+  std::cout << name_ << " found_b_box:" << found_b_box_ << std::endl;
   for(int i=0;i<msg->poses.size();i++){
     b.x = msg ->poses[i].position.x;
     b.id = msg ->poses[i].position.z;
-    //std::cout << "debug0 track_b_box_id:"<< track_b_box_id_ << std::endl;
     if(track_b_box_id_ != STOP_TRACK_B_BOX){
-      //std::cout << "debug1 !!!!!" << std::endl;
       if(b.id == track_b_box_id_){
         found_b_box_ = 1;
-        //std::cout << "debug2 !!!!! found_b_box:" << found_b_box_ << std::endl;
       }
     }
     boxes_.push_back(b);
@@ -459,6 +476,7 @@ bool PanelAction::rotate_for_bounding_box(const int bounding_box_target_x, const
   geometry_msgs::Twist vel;
   int bounding_box_x_error = 10000;
   while(1){
+    if (stop_action())return 1;
     for(int i=0;i<boxes_.size();i++){
       if(boxes_[i].id == target_id)bounding_box_x_error = boxes_[i].x - bounding_box_target_x;
     }
@@ -497,6 +515,7 @@ bool PanelAction::rotate_for_bounding_box(const int bounding_box_target_x, const
     r.sleep();
     ros::spinOnce();
   }
+  return 0;
 }
 
 double PanelAction::get_scan_sum(){
@@ -508,16 +527,44 @@ double PanelAction::get_scan_sum(){
 
 void PanelAction::track_b_box_start(int id){
   track_b_box_id_ = id;
+  search_b_box_ = 1;
 }
 
 void PanelAction::track_b_box_clear(){
-  track_b_box_id_ = 333;
+  track_b_box_id_ = STOP_TRACK_B_BOX;
   found_b_box_ = 0;
+  search_b_box_ = 0;
 }
+
 
 bool PanelAction::get_found_b_box_state(){
   ros::Rate r(10);
   r.sleep();
   ros::spinOnce();
   return found_b_box_;
+}
+
+void PanelAction::check_door_start(){
+  ros::spinOnce();
+  do_check_door_ = 1;
+  first_scan_sum_ = scan_sum_;
+  open_door_ = 0;
+  std::cout << "start check door, now scan sum: " << first_scan_sum_ << std::endl;
+}
+
+void PanelAction::check_door_stop(){
+  do_check_door_ = 0;
+}
+
+bool PanelAction::stop_action(){
+    ros::spinOnce();
+    if (found_b_box_ == 1 && search_b_box_){
+      ROS_INFO("found bounding box %d stop action!", track_b_box_id_);
+      return 1;
+    }
+    if (open_door_ == 1 && do_check_door_){
+      ROS_INFO("open the door stop action!");
+      return 1;
+    }
+    return 0;
 }
