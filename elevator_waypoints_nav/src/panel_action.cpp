@@ -48,7 +48,7 @@ void PanelAction::scanCallback(const sensor_msgs::LaserScan::ConstPtr& msg){
   }
   //std::cout << "scan call back , scan sum:" << scan_sum_ << std::endl;
 
-  if((scan_sum_ - first_scan_sum_ > 30) && do_check_door_){
+  if((scan_sum_ - first_scan_sum_ > 50) && do_check_door_){
     ROS_INFO("detect open the door");
     open_door_ = 1;
   }
@@ -207,12 +207,12 @@ bool PanelAction::straight(double d)
     if (vel.linear.x > 0.1)vel.linear.x = 0.1;
     if (vel.linear.x < -0.1)vel.linear.x = -0.1;
 
-    if(std::fabs(ang_diff) < 0.01 && std::fabs(straight_diff) < 0.005)counter++;
+    if(std::fabs(ang_diff) < 0.05 && std::fabs(straight_diff) < 0.01)counter++;
     else counter = 0;
 
     if(counter>40)break;
 
-		//std::cout << " count:" << counter << " straight:" << vel.linear.x << std::endl;
+		std::cout << " count:" << counter << " straight:" << vel.linear.x << std::endl;
 
 		velocity_pub_.publish(vel);
 		loop_rate.sleep();

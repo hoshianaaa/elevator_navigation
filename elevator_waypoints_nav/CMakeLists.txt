@@ -17,6 +17,7 @@ find_package(catkin REQUIRED COMPONENTS
   elevator_navigation_srv
   elevator_navigation_msgs
   roslib
+  go_target
 )
 
 find_package(PkgConfig)
