@@ -58,7 +58,7 @@ bool PanelAction::rotate_for_target_angle(double target_angle)
 {
 	ros::Rate loop_rate(freq_);
   const double limit_ang_vel = 0.3;
-  const double error_th = M_PI/180;
+  const double error_th = M_PI/180 * 5;
   int counter = 0;
   geometry_msgs::Twist vel;
 
@@ -187,6 +187,8 @@ bool PanelAction::straight(double d)
   int counter = 0;
 
 	while(1){
+
+    if (stop_action())return 1;
 		geometry_msgs::Twist vel;
 
     get_robot_pose();
@@ -218,6 +220,7 @@ bool PanelAction::straight(double d)
 		loop_rate.sleep();
 		ros::spinOnce();
 	}
+  return 0;
 }
 
 bool PanelAction::go_panel(double stop_distance){
@@ -305,7 +308,7 @@ bool PanelAction::back(double distance, double speed){
 bool PanelAction::up_arm(double height, double error_th, int start_number){
   double now_height;
   int now_number = start_number;
-  const int max_number = 17;
+  const int max_number = 21;
   const int min_number = 1;
 
   elevator_navigation_msgs::ArmMotionGoal goal;
@@ -389,7 +392,7 @@ bool PanelAction::home_arm(){
 bool PanelAction::home_arm_down(){
   elevator_navigation_msgs::ArmMotionGoal goal;
   goal.number = 0;
-  arm_motion_client_->sendGoal(goal);
+  arm_motion_down_client_->sendGoal(goal);
 }
  
 

@@ -16,7 +16,7 @@ Action::Action(geometry_msgs::Point sp, geometry_msgs::Point fp, bool rotate, bo
 	robot_frame_ = "base_link";
 	global_frame_ = "map";
 
-	speed_ = 0.3;
+	speed_ = 0.5;
 	ang_speed_max_ = 0.5;
 
 	freq_ = 10;
@@ -115,7 +115,7 @@ bool Action::rotate(double speed, double goal_angle_th){
 }
 
 bool Action::StopRobot(){
-	if (sensor_data_min_ < 0.6 && do_stop_robot_){
+	if (sensor_data_min_ < 0.7 && do_stop_robot_){
 		std::cout << "stop!!" << sensor_data_min_ <<  std::endl;
 		return 1;
 	}

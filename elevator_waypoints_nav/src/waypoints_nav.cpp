@@ -2,6 +2,7 @@
 #include <elevator_waypoints_nav/waypoints_nav.h>
 #include <ros/package.h>
 #include <elevator_navigation_srv/ElevatorAction.h>
+#include <std_srvs/Empty.h>
 
 WaypointsNavigation::WaypointsNavigation() :
 	move_base_action_("move_base", true),
@@ -23,6 +24,7 @@ WaypointsNavigation::WaypointsNavigation() :
 
 	ros::NodeHandle nh;
   elevator_action_client_ = nh.serviceClient<elevator_navigation_srv::ElevatorAction>("elevator_action");
+  clear_costmap_client_ = nh.serviceClient<std_srvs::Empty>("/move_base/clear_costmaps");
 
 	ros::NodeHandle private_nh("~");
 
@@ -39,7 +41,7 @@ WaypointsNavigation::WaypointsNavigation() :
 	elevator_front_pose_.position.y = 0;
 	elevator_front_pose_.orientation = tf::createQuaternionMsgFromYaw(M_PI);
 
-	start_floor_ = 3;
+	start_floor_ = 18;
 
 	elevator_point_.x = 0;
 	elevator_point_.y = 0;
@@ -107,9 +109,14 @@ void WaypointsNavigation::sleep(){
 	ros::spinOnce();
 }
 
-void WaypointsNavigation::elevator_action(){
+void WaypointsNavigation::elevator_action(int start, int target){
   elevator_navigation_srv::ElevatorAction srv;
+  srv.request.start_floor = start;
+  srv.request.target_floor = target;
   elevator_action_client_.call(srv);
+
+  std_srvs::Empty clear_cost_srv;
+  clear_costmap_client_.call(clear_cost_srv);
 	}
 
 bool WaypointsNavigation::readFile(const std::string &filename){
@@ -216,7 +223,7 @@ void WaypointsNavigation::run(){
 			startNavigationGL(elevator_front_pose_);
 			while(!onNavigationPoint(elevator_front_pose_.position, dist_err_)) {}
 			move_base_action_.cancelAllGoals();
-			elevator_action();
+			elevator_action(now_floor, next_floor);
 			startNavigationGL(*current_waypoint_);
 			while(!onNavigationPoint(current_waypoint_->geometry_msg.position, dist_err_)) {}
 

@@ -37,6 +37,7 @@ public:
 	bool straight(double d);
   bool line_tracking_stop_point(double x, double y, double angle);
 	bool go_panel(double stop_distance);
+	bool go_target_motion(double x, double y, double stop_distance);
 	bool back(double distance, double speed=0.1);
   bool rotate_for_bounding_box(const int bounding_box_target_x = 330, const int target_id = 0, const int error_th = 5);
   bool up_arm(double height, double error_th, int start_number = 4);

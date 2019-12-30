@@ -6,6 +6,7 @@
 	<node name="elevator_action_server" pkg="elevator_waypoints_nav" type="panel_action_node" output="screen" />
 	<node name="push_bottun_server" pkg="elevator_waypoints_nav" type="push_bottun" output="screen" />
 	<node name="neck_motion_server" pkg="elevator_waypoints_nav" type="neck_server.py" output="screen" />
-	<!--node name="elevator_wp_nav" pkg="elevator_waypoints_nav" type="waypoints_nav" output="screen" /-->
+	<node name="go_target_server" pkg="go_target" type="go_target_server.py" output="screen" />
+	<node name="elevator_wp_nav" pkg="elevator_waypoints_nav" type="waypoints_nav" output="screen" />
 </launch>
 

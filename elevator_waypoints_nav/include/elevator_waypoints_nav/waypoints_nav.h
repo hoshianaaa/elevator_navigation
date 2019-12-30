@@ -35,13 +35,13 @@ public:
 	bool onNavigationPoint(const geometry_msgs::Point &dist, double dist_err);
 	void sleep();
 	bool readFile(const std::string &filename);
-	void elevator_action();
+	void elevator_action(int now_floor, int next_floor);
 	tf::StampedTransform getRobotPosGL();
 	void run();
 private:
 	std::string world_frame_, robot_frame_;
 	actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> move_base_action_;
-  ros::ServiceClient elevator_action_client_;
+  ros::ServiceClient elevator_action_client_, clear_costmap_client_;
 	ros::Rate rate_;
 	tf::TransformListener tf_listener_;
 	std::vector<Waypoint> waypoints_;

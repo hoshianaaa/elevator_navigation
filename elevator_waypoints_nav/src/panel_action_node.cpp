@@ -7,17 +7,28 @@
 #include <elevator_navigation_srv/PushBottun.h>
 #include <elevator_navigation_srv/NeckMotion.h>
 #include <go_target/GoTarget.h>
+#include <std_msgs/Int8.h>
 
 int bottun_x_error = 100;
 double panel_distance = 100;
 int bounding_box_lock = 3;
 
 ros::ServiceClient push_bottun_client_, neck_motion_client_, go_target_client_;
+ros::Publisher change_map_pub_;
 
 void neck_motion(int number){
   elevator_navigation_srv::NeckMotion srv;
   srv.request.number = number;
   neck_motion_client_.call(srv);
+}
+
+bool go_target_motion(double x, double y, double stop_distance){
+  go_target::GoTarget srv;
+  srv.request.target_point.x = x;
+  srv.request.target_point.y = y;
+  srv.request.stop_distance = stop_distance;
+  go_target_client_.call(srv);
+  return true;
 }
 
 bool elevator_action(elevator_navigation_srv::ElevatorAction::Request &req, elevator_navigation_srv::ElevatorAction::Response &res)
@@ -27,9 +38,9 @@ bool elevator_action(elevator_navigation_srv::ElevatorAction::Request &req, elev
   double go_distance;
   double rotate_angle;
   //in elevator
-  double bounding_box_x_in_18 = 340;
-  double bounding_box_x_in_3 = 340;
-  double bounding_box_x_in_1 = 330;
+  double bounding_box_x_in_18 = 330;
+  double bounding_box_x_in_3 = 330;
+  double bounding_box_x_in_1 = 320;
   double go_distance_in_18 = 0.07;
   double go_distance_in_3 = 0.07;
   double go_distance_in_1 = 0.1;
@@ -59,9 +70,9 @@ bool elevator_action(elevator_navigation_srv::ElevatorAction::Request &req, elev
 
 	PanelAction pa_up("up");
   pa_up.home_arm();
-/*
-	pa_up.rotate(rotate_angle);
-	pa_up.go_panel(0.6);
+///*
+  double elevator_in_panel_pos[] = {1.85, -0.8};
+  go_target_motion(elevator_in_panel_pos[0], elevator_in_panel_pos[1], 0.6);
  
   int bounding_box_stop_number = 1;
 
@@ -150,8 +161,8 @@ bool elevator_action(elevator_navigation_srv::ElevatorAction::Request &req, elev
     if(pa_up.go_panel(stop_distance))break;
     if(pa_up.up_arm(height, up_arm_error_th, start_arm_number))break;
     pa_up.check_door_start();
-    pa_up.straight(go_distance);
-    pa_up.straight(-go_distance);
+    if(pa_up.straight(go_distance))break;
+    if(pa_up.straight(-go_distance))break;
     pa_up.home_arm();
 
     go_distance += 0.01;
@@ -161,7 +172,7 @@ bool elevator_action(elevator_navigation_srv::ElevatorAction::Request &req, elev
 
   pa_up.track_b_box_clear();
   pa_up.home_arm();
-  pa_up.back(0.5, 0.5);
+  pa_up.back(0.7, 0.5);
  	start_point.x = 1.8;
 	start_point.y = 0;
 	goal_point.x = 0;
@@ -169,18 +180,17 @@ bool elevator_action(elevator_navigation_srv::ElevatorAction::Request &req, elev
 
   Action in_elevator(start_point, goal_point, true);
   in_elevator.move();
-  */
+  //*/
   //out elevator
   double rotate_out = -M_PI/4;
   pa_up.home_arm();
 	PanelAction pa_e18("e18");
 	PanelAction pa_e1("e1");
-	pa_e18.rotate(rotate_out);
-	pa_e18.go_panel(0.45);
-  pa_e18.rotate_for_bounding_box(330, 0, 20);
-  pa_e18.go_panel(0.45);
 
-  int bounding_box_x2 = 300;
+  double elevator_out_panel_pos[] = {1.0, -0.8};
+  go_target_motion(elevator_out_panel_pos[0], elevator_out_panel_pos[1], 0.6);
+
+  int bounding_box_x2 = 315;
   int bounding_box_stop_number2 = 3;
   double height_e18 = 1.26;
   double height_e1 = 0.98;
@@ -193,6 +203,7 @@ bool elevator_action(elevator_navigation_srv::ElevatorAction::Request &req, elev
   if (req.target_floor == 1)
   {
     neck_motion(1);
+    pa_e1.home_arm_down();
   }
 
   pa_e1.track_b_box_start(1);
@@ -208,20 +219,24 @@ bool elevator_action(elevator_navigation_srv::ElevatorAction::Request &req, elev
       if(pa_e1.rotate_for_bounding_box(bounding_box_x2))break;
       if(pa_e1.go_panel(stop_distance_1kai))break;
       pa_e1.down_arm(height_e1, up_arm_error_th);
-      pa_e1.straight(go_distance_1kai);
       //pa_e1.check_door_start();
-      pa_e1.straight(-go_distance_1kai);
+      if(pa_e1.straight(go_distance_1kai))break;
+      if(pa_e1.straight(-go_distance_1kai))break;
       pa_e1.home_arm_down();
+      sleep(3);
+      go_distance_1kai += 0.01;
     }
     else{
       if(pa_e18.rotate_for_bounding_box(bounding_box_x2))break;
       if(pa_e18.go_panel(stop_distance2))break;
       pa_e18.up_arm(height_e18, up_arm_error_th, 1);
-      pa_e18.straight(go_distance2);
       //pa_e18.check_door_start();
+      if(pa_e18.straight(go_distance2))break;
       std::cout << "back!" << std::endl;
-      pa_e18.straight(-go_distance2);
+      if(pa_e18.straight(-go_distance2))break;
       pa_e18.home_arm();
+      sleep(3);
+      go_distance_1kai += 0.01;
     }
   }
 
@@ -241,6 +256,11 @@ bool elevator_action(elevator_navigation_srv::ElevatorAction::Request &req, elev
 
   std::cout << "debug out elevator start" << std::endl;
   out_elevator.move();
+
+  std_msgs::Int8 msg;
+  msg.data = req.target_floor;
+  change_map_pub_.publish(msg);
+
   std::cout << "debug out elevator finish" << std::endl;
   
 
@@ -253,6 +273,7 @@ int main(int argc, char** argv){
 	ros::init(argc, argv, "panel_action_node");
 	ros::NodeHandle n;
   
+  change_map_pub_ = n.advertise<std_msgs::Int8>("change_floor/floor_number", 1);
   ros::ServiceServer service = n.advertiseService("elevator_action", elevator_action);
   push_bottun_client_ = n.serviceClient<elevator_navigation_srv::PushBottun>("push_bottun");
   neck_motion_client_ = n.serviceClient<elevator_navigation_srv::NeckMotion>("neck_motion");
