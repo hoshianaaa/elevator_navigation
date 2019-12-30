@@ -2,7 +2,7 @@
 
 <launch>
   <arg name="robot_name" default="alpha"/>
-  <arg name="start_floor" default="3"/>
+  <arg name="start_floor" default="18"/>
   
   <include file="$(find ele_map_server)/launch/ele_map_server.launch">
     <arg name="start_floor" value="$(arg start_floor)"/>
