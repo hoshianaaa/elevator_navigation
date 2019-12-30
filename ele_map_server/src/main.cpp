@@ -261,7 +261,7 @@ int main(int argc, char** argv){
 	ros::init(argc, argv, "ele_map_server");
   std::string path = ros::package::getPath("ele_map_server");
   std::string map_path = path + "/elevator_map/";
-	EleMapServer es(map_path, 3);
+	EleMapServer es(map_path, 18);
 	ros::Rate r(10);
 	while(ros::ok()){
 		ros::spinOnce();
