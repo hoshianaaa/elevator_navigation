@@ -91,7 +91,7 @@ void WaypointsNavigation::computeWpOrientation(){
 	}
 }
 
-bool WaypointsNavigation::onNavigationPoint(const geometry_msgs::Point &dest, double dist_err = 0.8){
+bool WaypointsNavigation::onNavigationPoint(const geometry_msgs::Point &dest, double dist_err = 1.5){
 	tf::StampedTransform robot_gl = getRobotPosGL();
 
 	const double wx = dest.x;

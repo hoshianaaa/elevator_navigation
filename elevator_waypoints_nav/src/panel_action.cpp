@@ -49,7 +49,7 @@ void PanelAction::scanCallback(const sensor_msgs::LaserScan::ConstPtr& msg){
   //std::cout << "scan call back , scan sum:" << scan_sum_ << std::endl;
 
   if((scan_sum_ - first_scan_sum_ > 50) && do_check_door_){
-    ROS_INFO("detect open the door");
+    std::cout << name_ << "detect open the door" << std::endl;
     open_door_ = 1;
   }
 }
@@ -563,11 +563,26 @@ bool PanelAction::stop_action(){
     ros::spinOnce();
     if (found_b_box_ == 1 && search_b_box_){
       ROS_INFO("found bounding box %d stop action!", track_b_box_id_);
+      std::cout << name_ << " found b box id:" << track_b_box_id_ << std::endl;
       return 1;
     }
     if (open_door_ == 1 && do_check_door_){
-      ROS_INFO("open the door stop action!");
+      //std::cout << name_ << " open the door stop action!" << std::endl;
       return 1;
     }
+    //std::cout << name_ << " not stop action" << std::endl;
     return 0;
+}
+
+void PanelAction::sleep(double time){
+  double start_time = ros::Time::now().toSec();
+  double now_time = ros::Time::now().toSec();
+	ros::Rate loop_rate(freq_);
+
+  while(now_time - start_time < time)
+  {
+    ros::spinOnce();
+    now_time = ros::Time::now().toSec();
+    loop_rate.sleep();
+  }
 }

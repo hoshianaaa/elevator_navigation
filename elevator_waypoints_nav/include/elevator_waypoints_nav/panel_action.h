@@ -53,6 +53,7 @@ public:
   void check_door_start();
   void check_door_stop();
   bool stop_action();
+  void sleep(double time);
 
 private:
 	void scanCallback(const sensor_msgs::LaserScan::ConstPtr& msg);
