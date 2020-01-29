@@ -1,6 +1,0 @@
-<?xml version="1.0"?>
-
-<launch>
-  <include file="$(find elevator_recognition)/launch/darknet_ros.launch"/>
-  <node name="publish_image" pkg="elevator_recognition" type="publish_image.py"/>
-</launch>

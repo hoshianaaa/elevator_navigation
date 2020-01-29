@@ -1,7 +1,7 @@
 subscribers:
 
   camera_reading:
-    topic: /camera/rgb/image_color
+    topic: /camera/rgb/image_raw
     queue_size: 1
 
 actions:
@@ -29,5 +29,5 @@ publishers:
 image_view:
 
   enable_opencv: true
-  wait_key_delay: 1
+  wait_key_delay: 0.1
   enable_console_output: true

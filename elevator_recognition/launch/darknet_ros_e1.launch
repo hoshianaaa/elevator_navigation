@@ -10,15 +10,15 @@
   <arg name="yolo_config_path"           default="$(find elevator_recognition)/yolo_network_config/cfg"/>
 
   <!-- ROS and network parameter files -->
-  <arg name="ros_param_file"             default="$(find elevator_recognition)/config/ros_e18.yaml"/>
-  <arg name="network_param_file"         default="$(find elevator_recognition)/config/e18.yaml"/>
+  <arg name="ros_param_file"             default="$(find elevator_recognition)/config/ros_e1.yaml"/>
+  <arg name="network_param_file"         default="$(find elevator_recognition)/config/e1.yaml"/>
 
   <!-- Load parameters -->
-  <rosparam command="load" ns="darknet_ros_e18" file="$(arg ros_param_file)"/>
-  <rosparam command="load" ns="darknet_ros_e18" file="$(arg network_param_file)"/>
+  <rosparam command="load" ns="darknet_ros_e1" file="$(arg ros_param_file)"/>
+  <rosparam command="load" ns="darknet_ros_e1" file="$(arg network_param_file)"/>
 
   <!-- Start darknet and ros wrapper -->
-  <node pkg="darknet_ros" type="darknet_ros" name="darknet_ros_e18" output="screen" launch-prefix="$(arg launch_prefix)">
+  <node pkg="darknet_ros" type="darknet_ros" name="darknet_ros_e1" output="screen" launch-prefix="$(arg launch_prefix)">
     <param name="weights_path"          value="$(arg yolo_weights_path)" />
     <param name="config_path"           value="$(arg yolo_config_path)" />
     <param name="switch" value="0" />

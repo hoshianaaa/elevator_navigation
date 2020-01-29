@@ -3,24 +3,25 @@
 <launch>
   <!-- Console launch prefix -->
   <arg name="launch_prefix" default=""/>
-  <arg name="image" default="/image_data" />
+  <arg name="image" default="/camera/rgb/image_raw" />
 
   <!-- Config and weights folder. -->
-  <arg name="yolo_weights_path"          default="/home/icart/"/>
+  <arg name="yolo_weights_path"          default="/home/hoshina/"/>
   <arg name="yolo_config_path"           default="$(find elevator_recognition)/yolo_network_config/cfg"/>
 
   <!-- ROS and network parameter files -->
-  <arg name="ros_param_file"             default="$(find elevator_recognition)/config/ros_e1.yaml"/>
-  <arg name="network_param_file"         default="$(find elevator_recognition)/config/e1.yaml"/>
+  <arg name="ros_param_file_up"             default="$(find elevator_recognition)/config/ros_up.yaml"/>
+  <arg name="network_param_file_up"         default="$(find elevator_recognition)/config/up.yaml"/>
 
   <!-- Load parameters -->
-  <rosparam command="load" ns="darknet_ros" file="$(arg ros_param_file)"/>
-  <rosparam command="load" ns="darknet_ros" file="$(arg network_param_file)"/>
+  <rosparam command="load" ns="darknet_ros_up" file="$(arg ros_param_file_up)"/>
+  <rosparam command="load" ns="darknet_ros_up" file="$(arg network_param_file_up)"/>
 
   <!-- Start darknet and ros wrapper -->
-  <node pkg="darknet_ros" type="darknet_ros" name="darknet_ros" output="screen" launch-prefix="$(arg launch_prefix)">
+  <node pkg="darknet_ros" type="darknet_ros" name="darknet_ros_up" output="screen" launch-prefix="$(arg launch_prefix)">
     <param name="weights_path"          value="$(arg yolo_weights_path)" />
     <param name="config_path"           value="$(arg yolo_config_path)" />
+    <param name="switch" value="0" />
     <remap from="camera/rgb/image_raw"  to="$(arg image)" />
   </node>
 
